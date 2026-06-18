@@ -1,0 +1,45 @@
+# ---- Node / JS ----
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+build/
+*.tsbuildinfo
+.vercel/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ---- App artifacts ----
+/data/generated/
+/data/uploads/
+*.local
+coverage/
+playwright-report/
+test-results/

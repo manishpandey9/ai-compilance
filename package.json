@@ -1,0 +1,22 @@
+{
+  "name": "ai-act-navigator",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "api:dev": "cd services/api && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "api:test": "cd services/api && uv run pytest",
+    "api:migrate": "cd services/api && uv run alembic upgrade head",
+    "api:seed": "cd services/api && uv run python -m app.scripts.seed",
+    "api:pseo": "cd services/api && uv run python -m app.scripts.generate_pseo"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  }
+}

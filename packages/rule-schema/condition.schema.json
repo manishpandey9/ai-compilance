@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ai-act-navigator.dev/schemas/condition.json",
+  "title": "RuleCondition",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["all"],
+      "properties": {
+        "all": { "type": "array", "items": { "$ref": "#" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["any"],
+      "properties": {
+        "any": { "type": "array", "items": { "$ref": "#" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["none"],
+      "properties": {
+        "none": { "type": "array", "items": { "$ref": "#" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["field", "operator"],
+      "properties": {
+        "field": { "type": "string" },
+        "operator": {
+          "enum": [
+            "equals",
+            "not_equals",
+            "in",
+            "not_in",
+            "contains_any",
+            "contains_all",
+            "is_true",
+            "is_false",
+            "exists",
+            "not_exists"
+          ]
+        },
+        "value": {}
+      },
+      "additionalProperties": false
+    }
+  ]
+}

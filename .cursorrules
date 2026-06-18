@@ -1,0 +1,16 @@
+# Design Context
+
+Read before any UI, marketing, or visual work. Impeccable commands load these automatically.
+
+- **Strategy:** [`PRODUCT.md`](./PRODUCT.md) — register, users, voice, anti-references, principles
+- **Visual system:** [`DESIGN.md`](./DESIGN.md) — colors, typography, components, do's/don'ts
+
+**Quick reference**
+- Register: **brand** (marketing/pSEO leads; app follows)
+- Personality: sharp, technical, confident (Linear/Stripe register)
+- Anti-references: AI hype marketing — no neon, robots, "powered by AI", glassmorphism
+- Accent: emerald on slate-950 dark canvas; restrained (≤10% of screen)
+- Fonts: Geist Sans + Geist Mono — do not override with Arial
+- Accessibility: WCAG 2.1 AA
+
+For design iteration: `/impeccable polish`, `/impeccable critique`, `/impeccable live`
