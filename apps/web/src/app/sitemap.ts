@@ -13,13 +13,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const res = await fetch(`${API_BASE}/pages?limit=100`, { next: { revalidate: 3600 } });
     if (!res.ok) return staticRoutes;
-    const json = (await res.json()) as { data: { slug: string }[] };
+    const json = (await res.json()) as { data: { slug: string; index_supported?: boolean }[] };
     return [
       ...staticRoutes,
-      ...json.data.map((p) => ({
-        url: `${WEB_BASE}/eu-ai-act/${p.slug}`,
-        lastModified: new Date(),
-      })),
+      ...json.data
+        .filter((p) => p.index_supported !== false)
+        .map((p) => ({
+          url: `${WEB_BASE}/eu-ai-act/${p.slug}`,
+          lastModified: new Date(),
+        })),
     ];
   } catch {
     return staticRoutes;

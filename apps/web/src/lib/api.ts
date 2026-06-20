@@ -72,6 +72,7 @@ export type SEOPageResponse = {
   canonical_url: string;
   last_reviewed_at?: string;
   rule_version?: number;
+  index_supported?: boolean;
   references?: { citation_label: string; source_id: string }[];
 };
 
@@ -133,7 +134,10 @@ export const api = {
 
   getPage: (slug: string) => apiFetch<SEOPageResponse>(`/pages/${slug}`),
 
-  listPages: () => apiFetch<{ data: { slug: string; title: string }[] }>("/pages?limit=100"),
+  listPages: () =>
+    apiFetch<{ data: { slug: string; title: string; index_supported?: boolean }[] }>(
+      "/pages?limit=100",
+    ),
 
   createCheckout: (assessmentId: string, sku: "starter_report" | "evidence_pack") =>
     apiFetch<{ checkout_url: string; session_id: string }>("/checkout/session", {
