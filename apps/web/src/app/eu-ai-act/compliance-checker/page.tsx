@@ -104,6 +104,17 @@ export default function ComplianceCheckerPage() {
             Optional labels for your report. About five minutes of questions after this.
           </p>
 
+          <div className="mt-6 space-y-3 border-y border-zinc-200 py-5 text-sm leading-relaxed text-zinc-600">
+            <p>
+              The strongest rule-backed coverage today is HR recruitment, creditworthiness and
+              insurance pricing, chatbot transparency, and synthetic-media disclosure.
+            </p>
+            <p className="text-zinc-500">
+              If your use case falls outside current coverage or depends on unresolved facts, the
+              result will mark it for expert review instead of forcing a confident answer.
+            </p>
+          </div>
+
           {resumeId && (
             <p className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
               You have an assessment in progress. Continue below to pick up where you left off.

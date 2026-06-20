@@ -19,7 +19,7 @@ export default function CheckoutSuccessInner() {
     if (!assessmentId) return;
     (async () => {
       try {
-        const label = sku === "starter_report" ? "starter report" : "evidence pack";
+        const label = sku === "starter_report" ? "starter memo" : "evidence-prep pack";
         setStatus(`Generating your ${label}…`);
         const gen = await api.generateDocuments(assessmentId, sku);
         setReportId(gen.report_id);

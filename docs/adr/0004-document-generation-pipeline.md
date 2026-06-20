@@ -7,7 +7,7 @@
 
 ## Context
 
-The paid output is an audit-ready evidence pack: ~11 artifacts across MD, DOCX, CSV, XLSX, and PDF, each source-cited, editable, version-stamped, and assembled into a ZIP (PRD §7.2 F6). PDF rendering is the most resource-sensitive piece and must be cheap and reliable in a serverless/worker context.
+The paid output is a review-ready evidence-preparation pack: ~11 artifacts across MD, DOCX, CSV, XLSX, and PDF, each source-cited, editable, version-stamped, and assembled into a ZIP (PRD §7.2 F6). PDF rendering is the most resource-sensitive piece and must be cheap and reliable in a serverless/worker context.
 
 ## Decision
 

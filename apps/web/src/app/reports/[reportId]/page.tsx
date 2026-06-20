@@ -26,7 +26,7 @@ const ARTIFACT_LABELS: Record<string, string> = {
   "11_evidence_tracker.xlsx": "Evidence tracker",
   "12_customer_procurement_summary.pdf": "Procurement summary (PDF)",
   "starter_report.zip": "Full starter pack (ZIP)",
-  "evidence_pack.zip": "Full evidence pack (ZIP)",
+  "evidence_pack.zip": "Full evidence-prep pack (ZIP)",
 };
 
 function artifactLabel(filename: string): string {

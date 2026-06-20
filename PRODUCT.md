@@ -8,16 +8,16 @@ product
 
 - **AI vendor founders and product managers** selling AI systems into EU customers (HR-tech, fintech, edtech, healthtech). They need a credible risk tier and document checklist before a customer, auditor, or regulator asks.
 - **Compliance and legal leads** who want a source-mapped first draft so expert review is fast and cheap — not a blank template.
-- **Consultants, DPOs, and law firms** automating intake and producing first-draft evidence packs for clients.
+- **Consultants, DPOs, and law firms** automating intake and producing first-draft evidence-prep packs for clients.
 - **Internal admins** (us) who publish rules and legal sources without breaking reproducibility of past reports.
 
 Context: users are under deadline pressure (EU AI Act enforcement timeline), skeptical of AI-generated legal advice, and evaluating whether this tool is serious enough to trust with procurement or audit conversations.
 
 ## Product Purpose
 
-EU AI Act Compliance Navigator turns a structured description of an AI system into a **source-cited compliance path**: risk classification → role classification → obligation matrix → document checklist → evidence pack.
+EU AI Act Compliance Navigator turns a structured description of an AI system into a **source-cited compliance path**: risk classification → role classification → obligation matrix → document checklist → evidence-preparation pack.
 
-Free risk check is acquisition; the paid output is an **audit-ready evidence pack** ($199–$699), not a generic PDF. Success means a user leaves knowing their tier, obligations, and next documents — and can defend the result to a customer or auditor because every conclusion traces to a versioned rule and legal source.
+Free risk check is acquisition; the paid output is a **review-ready evidence-preparation pack** ($199–$699), not a generic PDF or final legal opinion. Success means a user leaves knowing their tier, obligations, and next documents — and can defend the draft result to a customer, auditor, or counsel because every conclusion traces to a versioned rule and legal source.
 
 ## Brand Personality
 

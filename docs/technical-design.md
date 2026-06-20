@@ -57,7 +57,7 @@ The PRD selects the **EU AI Act compliance generator** as the strongest revenue 
 Three product truths drive every technical decision in this document:
 
 1. **The classification must be deterministic and source-traceable.** Legal status is never decided by an LLM. A versioned rule engine backed by versioned legal sources produces every binding result. LLMs are confined to *drafting readable prose after* a deterministic result exists (PRD §3, §11.1, §14.3, FR-RE-001).
-2. **The paid output is an audit-ready evidence pack, not a generic PDF.** The economic engine is paid reports, evidence packs, and implementation sprints — pSEO is acquisition, not the product (PRD §1, §5, §27).
+2. **The paid output is a review-ready evidence-preparation pack, not a generic PDF or final legal opinion.** The economic engine is paid reports, evidence-prep packs, and implementation sprints — pSEO is acquisition, not the product (PRD §1, §5, §27).
 3. **Everything is versioned.** Assessments, rules, legal sources, templates, and generated documents must record the exact versions that produced them, so results are reproducible and "regenerate under latest law" is a first-class feature (PRD §10.3 FR-DG-004/005, §13).
 
 ### 1.1 Primary jobs-to-be-done
@@ -71,7 +71,7 @@ Three product truths drive every technical decision in this document:
 
 ### 1.2 Business model the architecture must serve
 
-Free risk check (lead magnet) → **$199 starter report** → **$699 evidence pack** → **$5k+ readiness sprint** → **$499+/mo workspace** (PRD §5, §23). The architecture is optimized so that the **marginal cost of one paid pack is a few cents** of compute and storage, while the **price is $199–$699** — i.e. >99% gross margin on the digital product, with services as the high-touch upsell. See [cost-model.md](./cost-model.md).
+Free risk check (lead magnet) → **$199 starter memo** → **$699 evidence-prep pack** → **$5k+ readiness sprint** → **$499+/mo workspace** (PRD §5, §23). The architecture is optimized so that the **marginal cost of one paid pack is a few cents** of compute and storage, while the **price is $199–$699** — i.e. >99% gross margin on the digital product, with services as the high-touch upsell. See [cost-model.md](./cost-model.md).
 
 ---
 
@@ -871,7 +871,7 @@ Aligned to PRD §20. Each phase lists the design artifacts/components it activat
 | Annex III route | Use-case-based high-risk classification path (PRD §14.3 step 6). |
 | Annex IV | Technical documentation content the skeleton maps to (PRD §17.4). |
 | FRIA | Fundamental Rights Impact Assessment template (PRD §17.5). |
-| Evidence pack | The paid ZIP of source-cited artifacts (PRD §7.2 F6). |
+| Evidence-prep pack | The paid ZIP of source-cited review artifacts (PRD §7.2 F6). |
 | RuleSet version | Immutable, published collection of rules pinned by each classification. |
 | Source trace | The list of legal references justifying a result (PRD §10.2 FR-RE-002). |
 

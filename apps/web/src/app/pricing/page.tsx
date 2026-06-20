@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Free risk preview, $199 starter report, $699 evidence pack.",
+  description: "Free risk preview, $199 starter classification memo, $699 evidence-prep pack.",
 };
 
 const PLANS = [
@@ -15,22 +15,23 @@ const PLANS = [
     name: "Risk preview",
     price: "Free",
     summary:
-      "Risk tier, provider role, obligation overview, and a list of documents you still need.",
+      "Rule-based risk tier, provider/deployer role, obligation preview, and document gaps.",
     highlight: false,
     cta: { label: "Start questionnaire", href: "/eu-ai-act/compliance-checker" },
   },
   {
-    name: "Starter report",
+    name: "Starter classification memo",
     price: "$199",
-    summary: "Written risk memo, obligation checklist, document gap analysis. Unlocked on the results page after the free preview.",
+    summary:
+      "Source-cited memo, obligation checklist, and document gap analysis for procurement or counsel review.",
     highlight: false,
     cta: null,
   },
   {
-    name: "Evidence pack",
+    name: "Evidence-prep pack",
     price: "$699",
     summary:
-      "Full report plus Annex IV outline, human oversight plan, FRIA template when required, evidence tracker.",
+      "Editable first drafts for customer, auditor, or internal review: full memo, Annex IV outline, human oversight plan, FRIA template when required, and evidence tracker.",
     highlight: true,
     cta: { label: "Start questionnaire", href: "/eu-ai-act/compliance-checker" },
   },
@@ -50,7 +51,13 @@ export default function PricingPage() {
           </BackLink>
           <h1 className="text-headline mt-6 text-zinc-900">Pricing</h1>
           <p className="mt-3 max-w-lg text-zinc-600">
-            Try the preview first. Pay when you need documents to send to a customer or auditor.
+            Try the preview first. Pay when you need source-cited drafts to send into procurement,
+            counsel, auditor, or internal compliance review.
+          </p>
+
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-zinc-500">
+            These packs prepare evidence and review materials from a deterministic rule engine. They
+            are not legal advice, a notified-body submission, or a final audit approval.
           </p>
 
           <div className="mt-14 border-y border-zinc-200">
