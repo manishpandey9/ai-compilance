@@ -15,6 +15,7 @@ from app.services.assessment_service import (
     get_ordered_question_keys,
     keys_to_clear_after,
 )
+from app.services.assessment_facts import prepare_classification_facts
 from app.rules.engine import classify
 from app.services.classification_service import (
     get_obligations_preview,
@@ -146,7 +147,8 @@ async def rewind_assessment(
 async def run_classification(session: AsyncSession, assessment: Assessment) -> ClassifyResponse:
     answers = await get_answers_map(session, assessment.id)
     rule_version, source_version, rules = await load_rule_records(session)
-    output = classify(answers, rules, rule_version=rule_version, source_version=source_version)
+    facts = prepare_classification_facts(answers)
+    output = classify(facts, rules, rule_version=rule_version, source_version=source_version)
 
     free_preview = None
     if output.classification_status == "classified" and output.risk_tier and output.primary_actor_role:
