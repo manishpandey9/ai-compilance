@@ -16,12 +16,21 @@ from app.services.document_service import (
     create_download_token,
     enqueue_generation,
     get_active_entitlement,
+    should_schedule_generation,
 )
 from app.services.payment_service import create_checkout_session
 from app.storage import download_bytes
 from app.workers.generate_document import run_generate_document
 
 router = APIRouter(tags=["documents", "payments"])
+
+
+def unique_report_documents(docs: list[GeneratedDocument]) -> list[GeneratedDocument]:
+    """Collapse duplicate artifact rows by final filename, preserving latest rows."""
+    by_name: dict[str, GeneratedDocument] = {}
+    for doc in docs:
+        by_name[doc.file_path.rsplit("/", 1)[-1]] = doc
+    return list(by_name.values())
 
 
 @router.post("/checkout/session", response_model=CheckoutSessionResponse)
@@ -60,9 +69,10 @@ async def generate_documents(
             detail={"error": {"code": "entitlement_required", "message": "Purchase required", "details": []}},
         )
 
-    job = await enqueue_generation(db, assessment, body.sku)
+    job, created = await enqueue_generation(db, assessment, body.sku)
     await db.commit()
-    background_tasks.add_task(run_generate_document, job.report_id)
+    if should_schedule_generation(job, created=created):
+        background_tasks.add_task(run_generate_document, job.report_id)
     return GenerateDocumentResponse(report_id=job.report_id, status=job.status)
 
 
@@ -79,7 +89,7 @@ async def get_report_status(
     docs_result = await db.execute(
         select(GeneratedDocument).where(GeneratedDocument.report_id == report_id)
     )
-    docs = docs_result.scalars().all()
+    docs = unique_report_documents(docs_result.scalars().all())
     artifacts = []
     for doc in docs:
         token = await create_download_token(db, doc.assessment_id, doc.file_path)

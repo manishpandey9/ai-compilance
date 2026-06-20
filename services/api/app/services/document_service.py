@@ -5,7 +5,7 @@ from __future__ import annotations
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from ulid import ULID
@@ -48,13 +48,13 @@ async def get_active_entitlement(
 
 async def enqueue_generation(
     session: AsyncSession, assessment: Assessment, sku: str
-) -> ReportJob:
+) -> tuple[ReportJob, bool]:
     existing = await session.execute(
         select(ReportJob).where(ReportJob.assessment_id == assessment.id, ReportJob.sku == sku)
     )
     job = existing.scalar_one_or_none()
     if job:
-        return job
+        return job, False
 
     job = ReportJob(
         report_id=_report_id(),
@@ -66,13 +66,30 @@ async def enqueue_generation(
     )
     session.add(job)
     await session.flush()
-    return job
+    return job, True
+
+
+def should_schedule_generation(job: ReportJob, *, created: bool) -> bool:
+    """Return whether this request should enqueue a background document job."""
+    return created or job.status == "failed"
 
 
 def run_generation_sync(session: Session, report_id: str) -> None:
     """Generate documents synchronously (worker or background task)."""
     job = session.execute(select(ReportJob).where(ReportJob.report_id == report_id)).scalar_one()
+    existing_count = session.execute(
+        select(func.count()).select_from(GeneratedDocument).where(GeneratedDocument.report_id == report_id)
+    ).scalar_one()
+    if job.status == "ready" and existing_count:
+        return
+    if job.status == "generating":
+        return
+
+    if existing_count:
+        session.execute(delete(GeneratedDocument).where(GeneratedDocument.report_id == report_id))
+
     job.status = "generating"
+    job.error_message = None
     session.commit()
 
     try:
