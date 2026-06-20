@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
+from app.data.pseo_catalog import is_index_supported
 from app.models import LegalReference, SEOPage, SEOPageReference
 from app.schemas import SEOPageResponse
 
@@ -27,6 +28,7 @@ async def list_pages(
                 "title": p.title,
                 "page_type": p.page_type,
                 "last_reviewed_at": p.last_reviewed_at,
+                "index_supported": is_index_supported(p.slug),
             }
             for p in pages
         ]
@@ -68,5 +70,6 @@ async def get_page(slug: str, db: AsyncSession = Depends(get_db)) -> SEOPageResp
         canonical_url=page.canonical_url,
         last_reviewed_at=page.last_reviewed_at,
         rule_version=page.rule_version,
+        index_supported=is_index_supported(page.slug),
         references=references,
     )

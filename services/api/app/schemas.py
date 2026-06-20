@@ -122,6 +122,7 @@ class SEOPageResponse(BaseModel):
     canonical_url: str
     last_reviewed_at: datetime | None = None
     rule_version: int | None = None
+    index_supported: bool = True
     references: list[dict[str, str]] = Field(default_factory=list)
 
 

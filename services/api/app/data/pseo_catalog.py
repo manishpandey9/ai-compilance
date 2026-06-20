@@ -57,3 +57,40 @@ PSEO_CATALOG = [
     ("templates", "Templates", "fundamental-rights-impact-assessment", "FRIA Template", "high_risk", "Article 27"),
     ("templates", "Templates", "human-oversight-plan", "Human Oversight Plan Template", "high_risk", "Article 14"),
 ]
+
+
+SUPPORTED_INDEX_SLUGS = {
+    # Current deterministic rule coverage: HR recruitment and selection.
+    "hr-tech/resume-screening",
+    "hr-tech/candidate-ranking",
+    "hr-tech/interview-analysis",
+    "hr-tech/job-matching",
+    "hr-tech/skills-assessment",
+    "hr-tech/background-check-ai",
+    # Current deterministic rule coverage: creditworthiness / insurance pricing.
+    "fintech/credit-scoring",
+    "fintech/loan-eligibility",
+    "fintech/insurance-pricing",
+    "fintech/underwriting-ai",
+    # Current deterministic rule coverage: Article 50 transparency triggers.
+    "general/customer-support-chatbot",
+    "general/ai-generated-content",
+    "general/deepfake-disclosure",
+    "general/synthetic-voice",
+    # Role and template pages are useful acquisition pages without asserting an unsupported use-case result.
+    "roles/provider-vs-deployer-hr",
+    "roles/provider-vs-deployer-fintech",
+    "templates/annex-iv-technical-documentation",
+    "templates/fundamental-rights-impact-assessment",
+    "templates/human-oversight-plan",
+}
+
+
+def index_supported_slugs() -> set[str]:
+    """Return pSEO slugs backed closely enough by current rules to index."""
+    all_slugs = {f"{industry}/{use_case}" for industry, _, use_case, *_ in PSEO_CATALOG}
+    return SUPPORTED_INDEX_SLUGS & all_slugs
+
+
+def is_index_supported(slug: str) -> bool:
+    return slug in index_supported_slugs()
