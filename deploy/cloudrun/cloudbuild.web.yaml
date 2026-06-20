@@ -1,0 +1,15 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - deploy/cloudrun/web.Dockerfile
+      - -t
+      - $_IMAGE
+      - --build-arg
+      - NEXT_PUBLIC_API_URL=$_NEXT_PUBLIC_API_URL
+      - --build-arg
+      - NEXT_PUBLIC_WEB_URL=$_NEXT_PUBLIC_WEB_URL
+      - .
+images:
+  - $_IMAGE

@@ -9,4 +9,7 @@ export const defaultMetadata: Metadata = {
   },
   description: SITE.description,
   metadataBase: new URL(SITE.url),
+  icons: {
+    icon: "/icon.svg",
+  },
 };
