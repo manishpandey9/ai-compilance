@@ -129,7 +129,7 @@ What each phase should do and how to verify it.
 |---|---|---|
 | **Phase 1 — Wizard** | Web: `/eu-ai-act/compliance-checker` | Questions branch by use case; progress updates |
 | **Phase 1 — Classify** | `POST .../classify` | Source-cited risk tier; never HTTP 500 |
-| **Phase 2 — Dev checkout** | Buy button on result page or `POST /checkout/session` | Entitlement created without Stripe keys |
+| **Phase 2 — Dev checkout** | Buy button on result page or `POST /checkout/session` | Entitlement created without Dodo/Stripe keys |
 | **Phase 2 — Evidence pack** | `POST /documents/generate` | ZIP with MD, PDF, DOCX, CSV, XLSX |
 | **Phase 2 — Downloads** | `GET /downloads/{token}` | File streams; 410 after expiry |
 | **Phase 3 — pSEO** | `/eu-ai-act/hr-tech/resume-screening` | Page renders; API returns `content_md` |
@@ -144,7 +144,7 @@ What each phase should do and how to verify it.
 Document these so testers don't chase false bugs:
 
 - **Clerk auth** — not implemented; all assessments are anonymous
-- **Real Stripe** — requires `STRIPE_SECRET_KEY` + price IDs; use dev checkout locally
+- **Real Dodo Payments** — requires `DODO_PAYMENTS_API_KEY`, `DODO_PRODUCT_EVIDENCE_PACK`, and `DODO_PAYMENTS_WEBHOOK_KEY`; use dev checkout locally unless you are explicitly testing provider callbacks
 - **Email** — no Resend integration yet
 - **Playwright E2E** — not in repo; use manual web flows in [web TESTING.md](../../apps/web/TESTING.md)
 - **FRIA / Annex IV** — templates aligned to Regulation (EU) 2024/1689 section outlines (Annex IV/V/VIII, Arts. 9–18, 26, 27, 43, 47, 49, 72, 73). Commission implementing-act forms (e.g. Art. 72(3) monitoring template, SME simplified Annex IV) must be ingested when published.

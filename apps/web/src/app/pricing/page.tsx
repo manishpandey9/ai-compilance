@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Free risk preview, $199 starter classification memo, $699 evidence-prep pack.",
+  description: "Free risk preview and a $20 EU AI Act evidence-prep pack.",
 };
 
 const PLANS = [
@@ -20,16 +20,8 @@ const PLANS = [
     cta: { label: "Start questionnaire", href: "/eu-ai-act/compliance-checker" },
   },
   {
-    name: "Starter classification memo",
-    price: "$199",
-    summary:
-      "Source-cited memo, obligation checklist, and document gap analysis for procurement or counsel review.",
-    highlight: false,
-    cta: null,
-  },
-  {
     name: "Evidence-prep pack",
-    price: "$699",
+    price: "$20",
     summary:
       "Editable first drafts for customer, auditor, or internal review: full memo, Annex IV outline, human oversight plan, FRIA template when required, and evidence tracker.",
     highlight: true,

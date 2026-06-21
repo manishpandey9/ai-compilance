@@ -52,7 +52,7 @@ for revenue.
 | Phase | Status | Deliverables |
 |---|---|---|
 | Phase 1 | Done | Assessment wizard, deterministic rule engine, classify API, seed rules |
-| Phase 2 | Done | Document generation (MD/PDF/DOCX/CSV/XLSX/ZIP), Stripe/dev checkout, entitlements, signed downloads |
+| Phase 2 | Done | Document generation (MD/PDF/DOCX/CSV/XLSX/ZIP), Dodo/dev checkout, entitlements, signed downloads |
 | Phase 3 | Done | 55 pSEO pages, sitemap.xml, robots.txt, JSON-LD structured data, page composer |
 | Phase 4 | Done | Admin API (rules preview/publish, SEO regenerate, legal sources), admin UI at `/admin` |
 

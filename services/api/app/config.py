@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     stripe_price_starter_report: str | None = None
     stripe_price_evidence_pack: str | None = None
 
+    dodo_payments_api_key: str | None = None
+    dodo_payments_webhook_key: str | None = None
+    dodo_payments_environment: str = "live_mode"
+    dodo_product_starter_report: str | None = None
+    dodo_product_evidence_pack: str | None = None
+
     admin_api_key: str = "dev-admin-key"
     web_base_url: str = "http://localhost:3000"
     download_token_ttl_seconds: int = 3600

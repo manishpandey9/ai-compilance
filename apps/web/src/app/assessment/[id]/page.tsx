@@ -204,21 +204,11 @@ function ResultView({ result }: { result: ClassifyResponse }) {
         <section className="mt-16 border-t border-zinc-200 pt-12">
           <h2 className="text-title font-semibold text-zinc-900">Downloadable documents</h2>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-600">
-            Paid tiers generate source-cited first drafts: classification memo, Annex IV outline,
+            The paid pack generates source-cited first drafts: classification memo, Annex IV outline,
             human oversight plan, obligation matrix, and evidence tracker. They are not a final legal
             opinion or audit approval.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button
-              variant="secondary"
-              surface="light"
-              onClick={async () => {
-                const { checkout_url } = await api.createCheckout(result.assessment_id, "starter_report");
-                window.location.href = checkout_url;
-              }}
-            >
-              Starter memo ($199)
-            </Button>
             <Button
               surface="light"
               onClick={async () => {
@@ -226,7 +216,7 @@ function ResultView({ result }: { result: ClassifyResponse }) {
                 window.location.href = checkout_url;
               }}
             >
-              Evidence-prep pack ($699)
+              Buy evidence-prep pack ($20)
             </Button>
           </div>
         </section>

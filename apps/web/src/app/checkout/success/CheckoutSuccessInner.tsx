@@ -20,8 +20,27 @@ export default function CheckoutSuccessInner() {
     (async () => {
       try {
         const label = sku === "starter_report" ? "starter memo" : "evidence-prep pack";
-        setStatus(`Generating your ${label}…`);
-        const gen = await api.generateDocuments(assessmentId, sku);
+        let gen: { report_id: string; status: string } | null = null;
+        for (let attempt = 1; attempt <= 8; attempt += 1) {
+          try {
+            setStatus(
+              attempt === 1
+                ? `Generating your ${label}…`
+                : `Confirming payment, then generating your ${label}…`,
+            );
+            gen = await api.generateDocuments(assessmentId, sku);
+            break;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "";
+            if (!message.includes("entitlement_required") && !message.includes("Purchase required")) {
+              throw err;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+          }
+        }
+        if (!gen) {
+          throw new Error("Payment is still being confirmed. Please refresh this page in a moment.");
+        }
         setReportId(gen.report_id);
         setStatus("ready");
       } catch (err) {

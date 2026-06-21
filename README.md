@@ -35,9 +35,11 @@ cd apps/web && pnpm dev
 - Web: http://localhost:3000
 - Admin: http://localhost:3000/admin (key: `dev-admin-key` from `.env`)
 
-## Dev checkout (no Stripe keys)
+## Dev checkout (no payment keys)
 
-With `STRIPE_SECRET_KEY` empty, checkout auto-grants entitlements in dev mode. Complete an assessment → click **Buy evidence pack** → documents generate at `/reports/{reportId}`.
+With `DODO_PAYMENTS_API_KEY` and `STRIPE_SECRET_KEY` empty, checkout auto-grants
+entitlements in dev mode. Complete an assessment → click **Buy evidence-prep
+pack** → documents generate at `/reports/{reportId}`.
 
 ## Tests
 

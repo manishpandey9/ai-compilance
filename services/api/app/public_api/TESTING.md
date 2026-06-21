@@ -225,7 +225,7 @@ curl -s -X POST http://localhost:8000/api/v1/checkout/session \
 
 **SKUs:** `starter_report` | `evidence_pack`
 
-**Expect (200) — dev mode (no Stripe keys):**
+**Expect (200) — dev mode (no Dodo/Stripe keys):**
 
 ```json
 {
@@ -234,7 +234,7 @@ curl -s -X POST http://localhost:8000/api/v1/checkout/session \
 }
 ```
 
-Dev mode **auto-creates an active entitlement**. With real Stripe, expect a `checkout.stripe.com` URL instead.
+Dev mode **auto-creates an active entitlement**. With Dodo configured, expect a Dodo hosted checkout URL instead.
 
 ---
 
@@ -298,9 +298,27 @@ curl -s -OJ "http://localhost:8000/api/v1/downloads/sig_..."
 
 ---
 
+### `POST /dodo/webhook`
+
+Dodo-signed only. Configure the production webhook URL as:
+
+```text
+https://aia-api-gsj2jve34a-uc.a.run.app/api/v1/dodo/webhook
+```
+
+Subscribed event:
+
+```text
+payment.succeeded
+```
+
+**Expect (200):** `{"received": true}`; creates/updates entitlement on `payment.succeeded`.
+
+---
+
 ### `POST /stripe/webhook`
 
-Stripe-signed only. Test with Stripe CLI in production setup:
+Legacy Stripe-signed endpoint. Test with Stripe CLI only if Stripe is re-enabled:
 
 ```bash
 stripe listen --forward-to localhost:8000/api/v1/stripe/webhook

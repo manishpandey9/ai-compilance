@@ -139,3 +139,23 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     sig = request.headers.get("stripe-signature", "")
     await handle_stripe_webhook(db, payload, sig)
     return {"received": True}
+
+
+@router.post("/dodo/webhook")
+async def dodo_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    from app.services.payment_service import handle_dodo_webhook
+
+    payload = await request.body()
+    headers = {
+        "webhook-id": request.headers.get("webhook-id", ""),
+        "webhook-signature": request.headers.get("webhook-signature", ""),
+        "webhook-timestamp": request.headers.get("webhook-timestamp", ""),
+    }
+    try:
+        await handle_dodo_webhook(db, payload, headers)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": {"code": "invalid_signature", "message": str(exc), "details": []}},
+        ) from exc
+    return {"received": True}

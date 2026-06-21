@@ -17,7 +17,7 @@ The FastAPI `schemas.py` (Pydantic v2) is the **single source of truth**; the Ne
 ### 1.1 Versioning & headers
 - All routes are under `/api/v1`. Breaking changes bump the prefix.
 - `Authorization: Bearer <jwt>` for authenticated routes (Clerk-issued, verified via JWKS).
-- `Idempotency-Key: <uuid>` **required** on all mutating POSTs and honored on the Stripe webhook.
+- `Idempotency-Key: <uuid>` **required** on all mutating POSTs and honored on payment webhooks.
 - `X-Request-Id` echoed for tracing (web ↔ api correlation).
 
 ### 1.2 Error envelope
@@ -157,7 +157,7 @@ Run the deterministic engine on current answers (FR-AW-004, FR-RE-*). Locks `rul
 **200 — needs_expert_review / conflicting_rules** include `reasons[]` and the partial trace, never a forced tier.
 
 ### `GET /assessments/{id}/result`
-Returns the stored `ClassificationResult` (free preview for anonymous; full trace gated by entitlement). Without entitlement, paid sections are replaced by `{ "locked": true, "unlock_sku": "starter_report" }`.
+Returns the stored `ClassificationResult` (free preview for anonymous; full trace gated by entitlement). Without entitlement, paid sections are replaced by `{ "locked": true, "unlock_sku": "evidence_pack" }`.
 
 ---
 
@@ -202,7 +202,7 @@ Streams the artifact via a short-lived signed R2 URL (TDD §12). Tokens are user
 ## 5. Payments (PRD §14.5, §7.5)
 
 ### `POST /checkout/session`
-Create a Stripe Checkout Session for a SKU.
+Create a hosted Dodo Payments checkout session for a SKU. In local dev mode, with no payment provider configured, this creates an active dev entitlement and redirects back to the app.
 
 **Request**
 ```json
@@ -210,11 +210,14 @@ Create a Stripe Checkout Session for a SKU.
 ```
 **200**
 ```json
-{ "checkout_url": "https://checkout.stripe.com/...", "session_id": "cs_..." }
+{ "checkout_url": "https://checkout.dodopayments.com/...", "session_id": "checkout_..." }
 ```
 
+### `POST /dodo/webhook`
+Dodo Payments → us. Signature-verified via `webhook-id`, `webhook-timestamp`, and `webhook-signature`; idempotent by `webhook-id`. Handles `payment.succeeded` by activating the matching entitlement. Replays return `200`.
+
 ### `POST /stripe/webhook`
-Stripe → us. Signature-verified, idempotent by event id (TDD §7.5). Handles `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated|deleted`. Creates/updates `entitlement`, enqueues `generate_document`. Always returns **200** quickly after persisting the event; processing is async. Replays return `200` (idempotent, recorded as `idempotency_replay` internally).
+Legacy Stripe endpoint. Signature-verified, idempotent by event id (TDD §7.5). Handles `checkout.session.completed`. Creates/updates `entitlement`. Replays return `200`.
 
 ---
 
@@ -281,6 +284,7 @@ Guarded: rejects (`409 conflict`, `details: failing_fixtures`) unless the full f
 | `GET /assessments/{id}/result` (full) | ❌ (preview only) | ✅ if owner+entitled | ✅ |
 | `POST /documents/generate`, downloads | ❌ | ✅ if entitled | ✅ |
 | `POST /checkout/session` | ✅ (email required) | ✅ | ✅ |
+| `POST /dodo/webhook` | Dodo-signed only | — | — |
 | `POST /stripe/webhook` | Stripe-signed only | — | — |
 | `/admin/*` | ❌ | ❌ | ✅ |
 
@@ -291,7 +295,7 @@ Guarded: rejects (`409 conflict`, `details: failing_fixtures`) unless the full f
 1. Mutating POSTs require `Idempotency-Key`; replays return the original response.
 2. `classify` is naturally idempotent for identical answers + ruleset (deterministic).
 3. `documents/generate` dedupes per `(assessment_id, sku)`; a second call returns the existing `report_id`.
-4. Stripe webhook dedupes by `stripe_event_id`.
+4. Payment webhooks dedupe by provider event id.
 5. `rules/publish` is transactional; concurrent publishes serialize on the single-active-ruleset constraint.
 
 ---

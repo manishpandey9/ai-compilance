@@ -1,24 +1,115 @@
-"""Stripe checkout and webhook handling."""
+"""Checkout and webhook handling for payment providers."""
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import json
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
+import httpx
 import stripe
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 
+if TYPE_CHECKING:
+    from app.models import Entitlement
+
 SKU_PRICES = {
-    "starter_report": ("Starter Report", 19900),
-    "evidence_pack": ("Evidence Pack", 69900),
+    "starter_report": ("Starter Report", 2000),
+    "evidence_pack": ("Evidence Pack", 2000),
 }
 
 
 def _stripe_configured() -> bool:
     return bool(settings.stripe_secret_key)
+
+
+def _dodo_configured() -> bool:
+    return bool(settings.dodo_payments_api_key)
+
+
+def _dodo_api_key() -> str:
+    return (settings.dodo_payments_api_key or "").strip()
+
+
+def _dodo_webhook_key() -> str:
+    return (settings.dodo_payments_webhook_key or "").strip()
+
+
+def _dodo_base_url() -> str:
+    if settings.dodo_payments_environment == "test_mode":
+        return "https://test.dodopayments.com"
+    return "https://live.dodopayments.com"
+
+
+def _dodo_product_id(sku: str) -> str:
+    product_map = {
+        "starter_report": settings.dodo_product_starter_report
+        or settings.dodo_product_evidence_pack,
+        "evidence_pack": settings.dodo_product_evidence_pack,
+    }
+    product_id = product_map.get(sku)
+    if not product_id:
+        raise ValueError(f"No Dodo product configured for {sku}")
+    return product_id
+
+
+async def _post_dodo(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.post(
+            f"{_dodo_base_url()}{path}",
+            headers={
+                "Authorization": f"Bearer {_dodo_api_key()}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+def _append_checkout_params(url: str, *, assessment_public_id: str, sku: str) -> str:
+    separator = "&" if "?" in url else "?"
+    return f"{url}{separator}assessment_id={assessment_public_id}&sku={sku}"
+
+
+def _verify_dodo_signature(payload: bytes, headers: dict[str, str]) -> dict[str, Any]:
+    webhook_id = headers.get("webhook-id", "")
+    timestamp = headers.get("webhook-timestamp", "")
+    signature = headers.get("webhook-signature", "")
+    webhook_key = _dodo_webhook_key()
+    if not webhook_id or not timestamp or not signature or not webhook_key:
+        raise ValueError("Missing Dodo webhook signature headers")
+
+    signed_payload = b".".join([webhook_id.encode(), timestamp.encode(), payload])
+    digest = hmac.new(webhook_key.encode(), signed_payload, hashlib.sha256).digest()
+    hex_digest = digest.hex()
+    b64_digest = base64.b64encode(digest).decode()
+    b64_digest_unpadded = b64_digest.rstrip("=")
+    valid_signatures = {
+        hex_digest,
+        b64_digest,
+        b64_digest_unpadded,
+        f"v1,{hex_digest}",
+        f"v1,{b64_digest}",
+        f"v1,{b64_digest_unpadded}",
+    }
+    if not any(hmac.compare_digest(signature, candidate) for candidate in valid_signatures):
+        raise ValueError("Invalid Dodo webhook signature")
+    return json.loads(payload.decode())
+
+
+def _dodo_customer_id(data: dict[str, Any]) -> str | None:
+    customer = data.get("customer")
+    if isinstance(customer, dict):
+        return customer.get("customer_id") or customer.get("id")
+    return data.get("customer_id")
 
 
 async def create_checkout_session(
@@ -35,9 +126,37 @@ async def create_checkout_session(
     if sku not in SKU_PRICES:
         raise ValueError(f"Unknown SKU: {sku}")
 
+    if _dodo_configured():
+        product_id = _dodo_product_id(sku)
+        checkout = await _post_dodo(
+            "/checkouts",
+            {
+                "product_cart": [{"product_id": product_id, "quantity": 1}],
+                "return_url": _append_checkout_params(
+                    success_url, assessment_public_id=assessment_public_id, sku=sku
+                ),
+                "cancel_url": cancel_url,
+                "metadata": {
+                    "assessment_id": str(assessment_id),
+                    "assessment_public_id": assessment_public_id,
+                    "sku": sku,
+                },
+            },
+        )
+        session_id = checkout["session_id"]
+        ent = Entitlement(
+            assessment_id=assessment_id,
+            sku=sku,
+            status="pending",
+            stripe_checkout_session_id=session_id,
+        )
+        session.add(ent)
+        await session.flush()
+        return {"checkout_url": checkout["checkout_url"], "session_id": session_id}
+
     if not _stripe_configured():
         if not settings.dev_mode:
-            raise RuntimeError("Stripe not configured")
+            raise RuntimeError("Payment provider not configured")
         session_id = f"cs_dev_{secrets.token_hex(12)}"
         ent = Entitlement(
             assessment_id=assessment_id,
@@ -81,6 +200,65 @@ async def create_checkout_session(
     return {"checkout_url": checkout.url, "session_id": checkout.id}
 
 
+async def handle_dodo_webhook(
+    session: AsyncSession, payload: bytes, headers: dict[str, str]
+) -> bool:
+    from app.models import Entitlement, StripeEvent
+
+    if not _dodo_configured():
+        return False
+
+    event = _verify_dodo_signature(payload, headers)
+    webhook_id = headers["webhook-id"]
+    event_type = event.get("type", "")
+    data = event.get("data") or {}
+    if not isinstance(data, dict):
+        data = {}
+
+    existing = await session.execute(
+        select(StripeEvent).where(StripeEvent.stripe_event_id == webhook_id)
+    )
+    if existing.scalar_one_or_none():
+        return True
+
+    session.add(
+        StripeEvent(
+            stripe_event_id=webhook_id,
+            type=event_type,
+            payload_json=event,
+            processed_at=datetime.now(UTC),
+        )
+    )
+
+    if event_type == "payment.succeeded":
+        checkout_session_id = data.get("checkout_session_id") or data.get("checkout_id")
+        ent = None
+        if checkout_session_id:
+            ent_result = await session.execute(
+                select(Entitlement).where(
+                    Entitlement.stripe_checkout_session_id == checkout_session_id
+                )
+            )
+            ent = ent_result.scalar_one_or_none()
+
+        metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        if ent is None and metadata.get("assessment_id") and metadata.get("sku"):
+            ent_result = await session.execute(
+                select(Entitlement).where(
+                    Entitlement.assessment_id == int(metadata["assessment_id"]),
+                    Entitlement.sku == metadata["sku"],
+                )
+            )
+            ent = ent_result.scalar_one_or_none()
+
+        if ent:
+            ent.status = "active"
+            ent.stripe_customer_id = _dodo_customer_id(data)
+
+    await session.flush()
+    return True
+
+
 async def handle_stripe_webhook(session: AsyncSession, payload: bytes, sig_header: str) -> bool:
     from app.models import Entitlement, StripeEvent
 
@@ -103,7 +281,7 @@ async def handle_stripe_webhook(session: AsyncSession, payload: bytes, sig_heade
             stripe_event_id=event.id,
             type=event.type,
             payload_json=dict(event),
-            processed_at=datetime.now(timezone.utc),
+            processed_at=datetime.now(UTC),
         )
     )
 
