@@ -333,11 +333,13 @@ def render_procurement_pdf(ctx: RenderContext) -> bytes:
             _pdf_wrap(pdf, f"- {m} not provided")
         pdf.ln(2)
 
-    pdf.set_font("Helvetica", "I", 9)
+    source_title = ctx.legal_source_title.replace(" (Artificial Intelligence Act)", "")
+    pdf.set_font("Helvetica", "I", 8)
     _pdf_wrap(
         pdf,
-        "Not legal advice. This summary is generated from a structured assessment and versioned "
-        f"rule engine. Legal source: {ctx.legal_source_title}.",
+        "Not legal advice. Generated from a structured assessment and versioned rule engine. "
+        f"Legal source: {source_title}.",
+        4,
     )
     return pdf.output()
 

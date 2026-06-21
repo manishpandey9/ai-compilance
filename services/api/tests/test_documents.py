@@ -1,5 +1,6 @@
 """Document renderer tests — PRD §21.2."""
 
+from dataclasses import replace
 import shutil
 import subprocess
 import tempfile
@@ -102,7 +103,7 @@ def test_obligation_csv_has_legal_columns():
 def test_procurement_pdf_generation():
     pdf = render_procurement_pdf(_sample_ctx())
     assert pdf[:4] == b"%PDF"
-    assert len(pdf) > 2000
+    assert len(pdf) > 1800
 
 
 def test_procurement_pdf_text_is_not_clipped_after_wrapped_lines():
@@ -122,6 +123,66 @@ def test_procurement_pdf_text_is_not_clipped_after_wrapped_lines():
     assert "System filters applications and ranks candidates." in text
     assert "Prepare technical documentation" in text
     assert "Legal source: Regulation (EU) 2024/1689." in normalized
+
+
+def test_procurement_pdf_does_not_create_orphan_legal_source_page():
+    if not shutil.which("pdfinfo"):
+        pytest.skip("pdfinfo is required for PDF page-count verification")
+
+    titles = [
+        "Establish and maintain risk management system",
+        "Implement data and data governance practices",
+        "Draw up technical documentation per Annex IV",
+        "Maintain automatic logging and record-keeping",
+        "Supply instructions for use to deployers",
+        "Design for effective human oversight",
+        "Ensure accuracy, robustness and cybersecurity",
+        "Comply with provider obligations under Article 16",
+        "Maintain quality management system",
+        "Retain documentation for 10 years",
+        "Establish post-market monitoring system",
+        "Report serious incidents",
+    ]
+    base_obligation = _sample_ctx().obligations[0]
+    ctx = replace(
+        _sample_ctx(),
+        company_name="Fresh Render QA Ltd",
+        system_name="HireRank Fresh PDF QA",
+        answer_rows=[
+            (
+                "EU market exposure",
+                "Operates in the EU today (customers, users, or data subjects in the EU)",
+            ),
+            ("Actor role", "Provider (develops and places the AI on the market)"),
+            ("Primary use case", "Hiring and HR (screening, ranking, interviews, performance)"),
+            ("Affects identifiable people", "Yes"),
+            (
+                "System functions",
+                "Filter or shortlist job applications / CVs; Rank or score candidates",
+            ),
+        ],
+        legal_source_title="Regulation (EU) 2024/1689 (Artificial Intelligence Act)",
+        obligations=[
+            replace(
+                base_obligation,
+                obligation_id=f"OBL-{idx:03}",
+                title=title,
+                legal_citation=f"Regulation (EU) 2024/1689 Article {idx + 8}",
+            )
+            for idx, title in enumerate(titles, start=1)
+        ],
+        pack_sku="evidence_pack",
+        is_high_risk=True,
+        needs_provider_conformity=True,
+    )
+
+    pdf = render_procurement_pdf(ctx)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pdf_path = Path(tmpdir) / "procurement.pdf"
+        pdf_path.write_bytes(pdf)
+        result = subprocess.run(["pdfinfo", str(pdf_path)], check=True, capture_output=True, text=True)
+
+    assert "Pages:           1" in result.stdout
 
 
 def test_evidence_zip():
