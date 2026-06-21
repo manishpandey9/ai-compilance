@@ -7,6 +7,7 @@ import io
 import zipfile
 
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 from jinja2 import Template
 from openpyxl import Workbook
 
@@ -213,7 +214,24 @@ class _ProcurementPDF(FPDF):
     def footer(self) -> None:
         self.set_y(-15)
         self.set_font("Helvetica", "I", 8)
-        self.cell(0, 10, f"Assessment {self.assessment_id} | Page {self.page_no()}", align="C")
+        self.cell(
+            0,
+            10,
+            f"Assessment {self.assessment_id} | Page {self.page_no()}",
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+            align="C",
+        )
+
+
+def _pdf_line(pdf: FPDF, text: str, height: float = 6, *, align: str = "") -> None:
+    pdf.set_x(pdf.l_margin)
+    pdf.cell(0, height, text, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align=align)
+
+
+def _pdf_wrap(pdf: FPDF, text: str, height: float = 5) -> None:
+    pdf.set_x(pdf.l_margin)
+    pdf.multi_cell(0, height, text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
 def render_procurement_pdf(ctx: RenderContext) -> bytes:
@@ -225,14 +243,14 @@ def render_procurement_pdf(ctx: RenderContext) -> bytes:
     pdf.add_page()
 
     pdf.set_font("Helvetica", "B", 18)
-    pdf.cell(0, 10, "EU AI Act Procurement Summary", ln=True)
+    _pdf_line(pdf, "EU AI Act Procurement Summary", 10)
     pdf.set_font("Helvetica", size=11)
     pdf.ln(2)
-    pdf.multi_cell(pdf.epw, 6, f"{ctx.system_name} | {ctx.company_name}")
+    _pdf_wrap(pdf, f"{ctx.system_name} | {ctx.company_name}", 6)
     pdf.ln(4)
 
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "At a glance", ln=True)
+    _pdf_line(pdf, "At a glance", 8)
     pdf.set_font("Helvetica", size=10)
     for line in [
         f"Risk tier: {ctx.risk_tier_label}",
@@ -242,42 +260,41 @@ def render_procurement_pdf(ctx: RenderContext) -> bytes:
         f"Rule set v{ctx.rule_version} | Sources {ctx.source_version}",
         f"Generated: {ctx.generated_at}",
     ]:
-        pdf.cell(0, 6, line, ln=True)
+        _pdf_line(pdf, line, 6)
     pdf.ln(4)
 
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "System profile", ln=True)
+    _pdf_line(pdf, "System profile", 8)
     pdf.set_font("Helvetica", size=10)
-    width = pdf.epw
     for label, value in ctx.answer_rows:
-        pdf.multi_cell(width, 5, f"{label}: {value}")
+        _pdf_wrap(pdf, f"{label}: {value}")
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "Why this tier", ln=True)
+    _pdf_line(pdf, "Why this tier", 8)
     pdf.set_font("Helvetica", size=10)
     if ctx.triggered_rules:
         for rule in ctx.triggered_rules:
             pdf.set_font("Helvetica", "B", 10)
-            pdf.multi_cell(width, 5, rule.legal_citation)
+            _pdf_wrap(pdf, rule.legal_citation)
             pdf.set_font("Helvetica", size=10)
-            pdf.multi_cell(width, 5, rule.rationale)
+            _pdf_wrap(pdf, rule.rationale)
             pdf.ln(1)
     else:
-        pdf.multi_cell(width, 5, "No rules triggered in this assessment.")
+        _pdf_wrap(pdf, "No rules triggered in this assessment.")
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "Obligations to address", ln=True)
+    _pdf_line(pdf, "Obligations to address", 8)
     pdf.set_font("Helvetica", size=9)
     for o in ctx.obligations[:12]:
-        pdf.multi_cell(width, 5, f"- {o.title} [{o.legal_citation}]")
+        _pdf_wrap(pdf, f"- {o.title} [{o.legal_citation}]")
     if not ctx.obligations:
-        pdf.multi_cell(width, 5, "No obligations mapped. Request expert review.")
+        _pdf_wrap(pdf, "No obligations mapped. Request expert review.")
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "Documents in this pack", ln=True)
+    _pdf_line(pdf, "Documents in this pack", 8)
     pdf.set_font("Helvetica", size=10)
     docs = [
         "Risk classification memo (markdown)",
@@ -305,21 +322,20 @@ def render_procurement_pdf(ctx: RenderContext) -> bytes:
             )
         docs.append("Evidence tracker (XLSX)")
     for d in docs:
-        pdf.cell(0, 5, f"- {d}", ln=True)
+        _pdf_wrap(pdf, f"- {d}")
     pdf.ln(2)
 
     if ctx.missing_variables:
         pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(0, 8, "Open gaps before customer submission", ln=True)
+        _pdf_line(pdf, "Open gaps before customer submission", 8)
         pdf.set_font("Helvetica", size=10)
         for m in ctx.missing_variables:
-            pdf.cell(0, 5, f"- {m} not provided", ln=True)
+            _pdf_wrap(pdf, f"- {m} not provided")
         pdf.ln(2)
 
     pdf.set_font("Helvetica", "I", 9)
-    pdf.multi_cell(
-        width,
-        5,
+    _pdf_wrap(
+        pdf,
         "Not legal advice. This summary is generated from a structured assessment and versioned "
         f"rule engine. Legal source: {ctx.legal_source_title}.",
     )

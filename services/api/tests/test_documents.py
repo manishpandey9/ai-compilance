@@ -1,5 +1,12 @@
 """Document renderer tests — PRD §21.2."""
 
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+import pytest
+
 from app.documents.labels import format_answer_value
 from app.documents.renderers import (
     build_zip,
@@ -96,6 +103,25 @@ def test_procurement_pdf_generation():
     pdf = render_procurement_pdf(_sample_ctx())
     assert pdf[:4] == b"%PDF"
     assert len(pdf) > 2000
+
+
+def test_procurement_pdf_text_is_not_clipped_after_wrapped_lines():
+    if not shutil.which("pdftotext"):
+        pytest.skip("pdftotext is required for PDF text extraction")
+
+    pdf = render_procurement_pdf(_sample_ctx())
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pdf_path = Path(tmpdir) / "procurement.pdf"
+        text_path = Path(tmpdir) / "procurement.txt"
+        pdf_path.write_bytes(pdf)
+        subprocess.run(["pdftotext", str(pdf_path), str(text_path)], check=True)
+        text = text_path.read_text()
+        normalized = " ".join(text.split())
+
+    assert "Actor role: Provider" in text
+    assert "System filters applications and ranks candidates." in text
+    assert "Prepare technical documentation" in text
+    assert "Legal source: Regulation (EU) 2024/1689." in normalized
 
 
 def test_evidence_zip():
