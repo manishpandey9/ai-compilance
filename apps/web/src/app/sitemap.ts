@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 const WEB_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: WEB_BASE, lastModified: new Date() },
@@ -11,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const res = await fetch(`${API_BASE}/pages?limit=100`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_BASE}/pages?limit=100`, { cache: "no-store" });
     if (!res.ok) return staticRoutes;
     const json = (await res.json()) as { data: { slug: string; index_supported?: boolean }[] };
     return [
