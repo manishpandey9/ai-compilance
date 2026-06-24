@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/layout/footer";
 import { AppShell, BackLink, MarketingHeader, PageContainer } from "@/components/layout/shell";
 import { ButtonLink } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { EVIDENCE_PACK_SKU } from "@/lib/product";
 
 export default function CheckoutSuccessInner() {
@@ -44,8 +45,10 @@ export default function CheckoutSuccessInner() {
         }
         setReportId(gen.report_id);
         setStatus("ready");
+        trackEvent("document_generation_completed", { sku });
       } catch (err) {
         setStatus(err instanceof Error ? err.message : "Generation failed");
+        trackEvent("document_generation_failed", { sku });
       }
     })();
   }, [assessmentId, sku]);

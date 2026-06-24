@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/layout/footer";
 import { AppShell, BackLink, MarketingHeader, PageContainer } from "@/components/layout/shell";
 import { FormError } from "@/components/ui/input";
 import { api, ReportStatusResponse } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { focusRingLight } from "@/lib/focus";
 
@@ -86,6 +87,12 @@ export default function ReportPage() {
                       </div>
                       <a
                         href={api.downloadUrl(a.download)}
+                        onClick={() =>
+                          trackEvent("document_download_clicked", {
+                            document_type: a.document_type,
+                            format: a.format,
+                          })
+                        }
                         className={cn("text-zinc-600 hover:text-zinc-900 hover:underline", focusRingLight)}
                       >
                         Download

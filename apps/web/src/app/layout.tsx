@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { Analytics } from "@/components/analytics/analytics";
 import { SkipLink } from "@/components/layout/skip-link";
 import { defaultMetadata } from "@/lib/metadata";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SkipLink />
         {children}
+        <Analytics />
       </body>
     </html>
   );

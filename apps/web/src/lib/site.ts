@@ -3,5 +3,6 @@ export const SITE = {
   title: "AI Act Navigator",
   description:
     "EU AI Act risk classification and evidence-prep drafts for AI vendors. Rule engine with article references, not a chatbot legal opinion.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000",
+  contactEmail: "swic678@gmail.com",
 } as const;

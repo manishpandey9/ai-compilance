@@ -13,6 +13,7 @@ import { RiskTierCard } from "@/components/ui/card";
 import { FormError } from "@/components/ui/input";
 import { api, AssessmentResponse, ClassifyResponse, NextQuestion } from "@/lib/api";
 import { loadAssessmentDraft, saveAssessmentDraft } from "@/lib/assessment-draft";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { focusRingLight } from "@/lib/focus";
 import { EVIDENCE_PACK_PRICE_LABEL, EVIDENCE_PACK_SKU } from "@/lib/product";
@@ -218,6 +219,11 @@ function ResultView({ result }: { result: ClassifyResponse }) {
                   EVIDENCE_PACK_SKU,
                   loadAssessmentDraft().email || undefined,
                 );
+                trackEvent("checkout_clicked", {
+                  classification_status: result.classification_status,
+                  risk_tier: result.risk_tier ?? null,
+                  sku: EVIDENCE_PACK_SKU,
+                });
                 window.location.href = checkout_url;
               }}
             >
@@ -269,6 +275,11 @@ export default function AssessmentWizardPage() {
       try {
         const classified = await api.classify(assessmentId);
         setResult(classified);
+        trackEvent("classification_completed", {
+          classification_status: classified.classification_status,
+          risk_tier: classified.risk_tier ?? null,
+          confidence: classified.confidence ?? null,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Classification failed");
       } finally {
@@ -298,6 +309,11 @@ export default function AssessmentWizardPage() {
       if (res.next_questions.length === 0) {
         const classified = await api.classify(assessmentId);
         setResult(classified);
+        trackEvent("classification_completed", {
+          classification_status: classified.classification_status,
+          risk_tier: classified.risk_tier ?? null,
+          confidence: classified.confidence ?? null,
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submit failed");

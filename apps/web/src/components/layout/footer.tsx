@@ -33,6 +33,9 @@ export function SiteFooter({ variant = "dark" }: SiteFooterProps) {
           <Link href="/eu-ai-act/hr-tech/resume-screening" className={cn("hover:underline", ring)}>
             Guides
           </Link>
+          <a href={`mailto:${SITE.contactEmail}`} className={cn("hover:underline", ring)}>
+            Contact
+          </a>
         </nav>
       </div>
       <p
@@ -41,7 +44,7 @@ export function SiteFooter({ variant = "dark" }: SiteFooterProps) {
           isDark ? "border-zinc-800 text-zinc-600" : "border-zinc-200 text-zinc-500",
         )}
       >
-        © {new Date().getFullYear()} {SITE.name}
+        © {new Date().getFullYear()} {SITE.name} · {SITE.contactEmail}
       </p>
     </footer>
   );

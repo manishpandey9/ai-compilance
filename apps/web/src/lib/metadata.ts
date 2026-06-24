@@ -12,4 +12,7 @@ export const defaultMetadata: Metadata = {
   icons: {
     icon: "/icon.svg",
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };

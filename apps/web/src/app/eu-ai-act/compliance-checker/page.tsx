@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { loadAssessmentDraft, saveAssessmentDraft } from "@/lib/assessment-draft";
+import { trackEvent } from "@/lib/analytics";
 
 export default function ComplianceCheckerPage() {
   const router = useRouter();
@@ -72,6 +73,11 @@ export default function ComplianceCheckerPage() {
               system_name: system || undefined,
               email: email || undefined,
             });
+            trackEvent("assessment_resumed", {
+              has_company: Boolean(company),
+              has_system: Boolean(system),
+              has_email: Boolean(email),
+            });
             await goToAssessment(draft.assessmentId);
             return;
           }
@@ -84,6 +90,11 @@ export default function ComplianceCheckerPage() {
         company_name: company || undefined,
         system_name: system || undefined,
         email: email || undefined,
+      });
+      trackEvent("assessment_started", {
+        has_company: Boolean(company),
+        has_system: Boolean(system),
+        has_email: Boolean(email),
       });
       await goToAssessment(res.assessment_id, res.claim_token);
     } catch (err) {
