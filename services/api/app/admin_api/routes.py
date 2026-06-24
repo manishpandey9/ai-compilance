@@ -1,9 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from datetime import UTC
+
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin_api.deps import require_admin
-from app.data.pseo_catalog import PSEO_CATALOG
 from app.db import get_db
 from app.models import Assessment, AuditLog, LegalSource, RuleSet, SEOPage
 from app.schemas import (
@@ -158,9 +159,9 @@ async def publish_rules(
     for rs in active:
         rs.status = "superseded"
     target.status = "active"
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    target.published_at = datetime.now(timezone.utc)
+    target.published_at = datetime.now(UTC)
     db.add(
         AuditLog(
             actor_email="admin",
@@ -176,19 +177,8 @@ async def publish_rules(
 @router.post("/seo-pages/regenerate", response_model=RegenerateSEOResponse, status_code=202)
 async def regenerate_seo(
     body: RegenerateSEORequest,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     _admin: str = Depends(require_admin),
 ) -> RegenerateSEOResponse:
-    async def _run() -> None:
-        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-        from app.config import settings
-
-        engine = create_async_engine(settings.database_url)
-        factory = async_sessionmaker(engine, expire_on_commit=False)
-        async with factory() as session:
-            await generate_pages(session)
-
-    background_tasks.add_task(lambda: __import__("asyncio").run(_run()))
-    return RegenerateSEOResponse(queued_pages=len(PSEO_CATALOG))
+    generated_pages = await generate_pages(db)
+    return RegenerateSEOResponse(queued_pages=generated_pages)
