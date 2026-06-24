@@ -1,5 +1,10 @@
 """50 high-intent pSEO pages catalog — PRD §16.2."""
 
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 PSEO_CATALOG = [
     ("hr-tech", "HR Tech", "resume-screening", "Resume Screening", "high_risk", "Annex III point 4(a)"),
     ("hr-tech", "HR Tech", "candidate-ranking", "Candidate Ranking", "high_risk", "Annex III point 4(a)"),
@@ -59,25 +64,42 @@ PSEO_CATALOG = [
 ]
 
 
-SUPPORTED_INDEX_SLUGS = {
-    # Current deterministic rule coverage: HR recruitment and selection.
-    "hr-tech/resume-screening",
-    "hr-tech/candidate-ranking",
-    "hr-tech/interview-analysis",
-    "hr-tech/job-matching",
-    "hr-tech/skills-assessment",
-    "hr-tech/background-check-ai",
-    # Current deterministic rule coverage: creditworthiness / insurance pricing.
-    "fintech/credit-scoring",
-    "fintech/loan-eligibility",
-    "fintech/insurance-pricing",
-    "fintech/underwriting-ai",
-    # Current deterministic rule coverage: Article 50 transparency triggers.
-    "general/customer-support-chatbot",
-    "general/ai-generated-content",
-    "general/deepfake-disclosure",
-    "general/synthetic-voice",
-    # Role and template pages are useful acquisition pages without asserting an unsupported use-case result.
+def _repo_data_path() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "data" / "seeds" / "rules.json"
+        if candidate.exists():
+            return candidate
+    return Path("data/seeds/rules.json").resolve()
+
+
+RULES_JSON_PATH = _repo_data_path()
+
+RULE_BACKED_SLUGS_BY_RULE_CODE = {
+    "annex_iii_employment_recruitment_selection": {
+        "hr-tech/resume-screening",
+        "hr-tech/candidate-ranking",
+        "hr-tech/interview-analysis",
+        "hr-tech/job-matching",
+        "hr-tech/skills-assessment",
+        "hr-tech/background-check-ai",
+    },
+    "annex_iii_credit_scoring": {
+        "fintech/credit-scoring",
+        "fintech/loan-eligibility",
+        "fintech/insurance-pricing",
+        "fintech/underwriting-ai",
+    },
+    "limited_risk_chatbot_transparency": {
+        "general/customer-support-chatbot",
+    },
+    "limited_risk_deepfake": {
+        "general/ai-generated-content",
+        "general/deepfake-disclosure",
+        "general/synthetic-voice",
+    },
+}
+
+ACQUISITION_SLUGS = {
     "roles/provider-vs-deployer-hr",
     "roles/provider-vs-deployer-fintech",
     "templates/annex-iv-technical-documentation",
@@ -85,11 +107,59 @@ SUPPORTED_INDEX_SLUGS = {
     "templates/human-oversight-plan",
 }
 
+LEGAL_REVIEW_PENDING = "pending_sme"
+LEGAL_REVIEW_APPROVED = "approved"
+
+
+def _active_rule_codes() -> set[str]:
+    try:
+        payload = json.loads(RULES_JSON_PATH.read_text())
+    except FileNotFoundError:
+        return set()
+    return {
+        str(row.get("rule_code"))
+        for row in payload.get("rules", [])
+        if isinstance(row, dict) and row.get("rule_code")
+    }
+
+
+def coverage_supported_slugs() -> set[str]:
+    """Return slugs backed by current rule coverage or acquisition-only pages."""
+    all_slugs = {f"{industry}/{use_case}" for industry, _, use_case, *_ in PSEO_CATALOG}
+    rule_codes = _active_rule_codes()
+    covered: set[str] = set()
+    for rule_code in rule_codes:
+        covered.update(RULE_BACKED_SLUGS_BY_RULE_CODE.get(rule_code, set()))
+    covered.update(ACQUISITION_SLUGS)
+    return covered & all_slugs
+
+
+def legal_review_status_for_slug(slug: str) -> str:
+    """Return SME review status for index gating."""
+    if slug in coverage_supported_slugs():
+        return LEGAL_REVIEW_PENDING
+    return LEGAL_REVIEW_PENDING
+
+
+def reviewed_citation_for_slug(slug: str) -> str:
+    """Return catalog citation annotated for SME review until approved."""
+    citations = {
+        f"{industry}/{use_case}": citation
+        for industry, _, use_case, _, _, citation in PSEO_CATALOG
+    }
+    citation = citations.get(slug, "General provisions")
+    if legal_review_status_for_slug(slug) == LEGAL_REVIEW_PENDING:
+        return f"{citation} — NEEDS SME REVIEW"
+    return citation
+
 
 def index_supported_slugs() -> set[str]:
-    """Return pSEO slugs backed closely enough by current rules to index."""
-    all_slugs = {f"{industry}/{use_case}" for industry, _, use_case, *_ in PSEO_CATALOG}
-    return SUPPORTED_INDEX_SLUGS & all_slugs
+    """Return pSEO slugs that are rule-backed and approved for indexing."""
+    return {
+        slug
+        for slug in coverage_supported_slugs()
+        if legal_review_status_for_slug(slug) == LEGAL_REVIEW_APPROVED
+    }
 
 
 def is_index_supported(slug: str) -> bool:

@@ -223,7 +223,7 @@ curl -s -X POST http://localhost:8000/api/v1/checkout/session \
   }'
 ```
 
-**SKUs:** `starter_report` | `evidence_pack`
+**SKU:** `evidence_pack`
 
 **Expect (200) — dev mode (no Dodo/Stripe keys):**
 
@@ -275,9 +275,9 @@ curl -s "http://localhost:8000/api/v1/documents/rep_01KV..."
 | `01_risk_classification_memo.md` | `md` |
 | `02_obligation_matrix.csv` | `csv` |
 | `03_procurement_summary.pdf` | `pdf` |
-| `04_annex_iv_technical_documentation.docx` | `docx` (evidence_pack only) |
-| `05_human_oversight_plan.docx` | `docx` (evidence_pack only) |
-| `10_evidence_tracker.xlsx` | `xlsx` (evidence_pack only) |
+| `04_annex_iv_technical_documentation.docx` | `docx` (high-risk evidence packs) |
+| `05_human_oversight_plan.docx` | `docx` (high-risk evidence packs) |
+| `10_evidence_tracker.xlsx` | `xlsx` (high-risk evidence packs) |
 | `evidence_pack.zip` | `zip` |
 
 Each artifact includes a `download` path like `/api/v1/downloads/sig_...`.

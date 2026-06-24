@@ -16,14 +16,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.services.email_service import send_purchase_receipt
 
 if TYPE_CHECKING:
     from app.models import Entitlement
 
-SKU_PRICES = {
-    "starter_report": ("Starter Report", 2000),
-    "evidence_pack": ("Evidence Pack", 2000),
-}
+EVIDENCE_PACK_SKU = "evidence_pack"
+EVIDENCE_PACK_PRICE_CENTS = 2000
+SUPPORTED_SKUS = {EVIDENCE_PACK_SKU}
 
 
 def _stripe_configured() -> bool:
@@ -49,11 +49,7 @@ def _dodo_base_url() -> str:
 
 
 def _dodo_product_id(sku: str) -> str:
-    product_map = {
-        "starter_report": settings.dodo_product_starter_report
-        or settings.dodo_product_evidence_pack,
-        "evidence_pack": settings.dodo_product_evidence_pack,
-    }
+    product_map = {EVIDENCE_PACK_SKU: settings.dodo_product_evidence_pack}
     product_id = product_map.get(sku)
     if not product_id:
         raise ValueError(f"No Dodo product configured for {sku}")
@@ -120,14 +116,22 @@ async def create_checkout_session(
     sku: str,
     success_url: str,
     cancel_url: str,
+    customer_email: str | None = None,
 ) -> dict[str, str]:
     from app.models import Entitlement
 
-    if sku not in SKU_PRICES:
+    if sku not in SUPPORTED_SKUS:
         raise ValueError(f"Unknown SKU: {sku}")
 
     if _dodo_configured():
         product_id = _dodo_product_id(sku)
+        metadata = {
+            "assessment_id": str(assessment_id),
+            "assessment_public_id": assessment_public_id,
+            "sku": sku,
+        }
+        if customer_email:
+            metadata["customer_email"] = customer_email
         checkout = await _post_dodo(
             "/checkouts",
             {
@@ -136,11 +140,7 @@ async def create_checkout_session(
                     success_url, assessment_public_id=assessment_public_id, sku=sku
                 ),
                 "cancel_url": cancel_url,
-                "metadata": {
-                    "assessment_id": str(assessment_id),
-                    "assessment_public_id": assessment_public_id,
-                    "sku": sku,
-                },
+                "metadata": metadata,
             },
         )
         session_id = checkout["session_id"]
@@ -173,10 +173,7 @@ async def create_checkout_session(
         return {"checkout_url": dev_url, "session_id": session_id}
 
     stripe.api_key = settings.stripe_secret_key
-    price_map = {
-        "starter_report": settings.stripe_price_starter_report,
-        "evidence_pack": settings.stripe_price_evidence_pack,
-    }
+    price_map = {EVIDENCE_PACK_SKU: settings.stripe_price_evidence_pack}
     price_id = price_map.get(sku)
     if not price_id:
         raise ValueError(f"No Stripe price configured for {sku}")
@@ -186,7 +183,13 @@ async def create_checkout_session(
         line_items=[{"price": price_id, "quantity": 1}],
         success_url=success_url,
         cancel_url=cancel_url,
-        metadata={"assessment_id": str(assessment_id), "sku": sku},
+        metadata={
+            "assessment_id": str(assessment_id),
+            "assessment_public_id": assessment_public_id,
+            "sku": sku,
+            "customer_email": customer_email or "",
+        },
+        customer_email=customer_email,
     )
 
     ent = Entitlement(
@@ -254,6 +257,11 @@ async def handle_dodo_webhook(
         if ent:
             ent.status = "active"
             ent.stripe_customer_id = _dodo_customer_id(data)
+            await send_purchase_receipt(
+                to_email=metadata.get("customer_email"),
+                assessment_public_id=metadata.get("assessment_public_id"),
+                sku=ent.sku,
+            )
 
     await session.flush()
     return True
@@ -294,6 +302,12 @@ async def handle_stripe_webhook(session: AsyncSession, payload: bytes, sig_heade
         if ent:
             ent.status = "active"
             ent.stripe_customer_id = cs.customer
+            metadata = cs.metadata or {}
+            await send_purchase_receipt(
+                to_email=metadata.get("customer_email"),
+                assessment_public_id=metadata.get("assessment_public_id"),
+                sku=ent.sku,
+            )
 
     await session.flush()
     return True

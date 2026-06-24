@@ -495,4 +495,3 @@ def build_zip(files: dict[str, bytes]) -> bytes:
 # Backwards-compatible aliases
 render_pdf = render_procurement_pdf
 build_evidence_pack_zip = build_zip
-build_starter_report_zip = build_zip

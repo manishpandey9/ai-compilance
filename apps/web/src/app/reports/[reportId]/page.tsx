@@ -25,7 +25,6 @@ const ARTIFACT_LABELS: Record<string, string> = {
   "10_eu_database_registration_data_pack.csv": "EU database registration (Annex VIII)",
   "11_evidence_tracker.xlsx": "Evidence tracker",
   "12_customer_procurement_summary.pdf": "Procurement summary (PDF)",
-  "starter_report.zip": "Full starter pack (ZIP)",
   "evidence_pack.zip": "Full evidence-prep pack (ZIP)",
 };
 

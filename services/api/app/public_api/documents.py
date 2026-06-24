@@ -1,10 +1,13 @@
+from datetime import UTC
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.dal.assessments import get_assessment_by_public_id
 from app.db import get_db
-from app.models import DownloadToken, GeneratedDocument, ReportJob
+from app.models import DownloadToken, Entitlement, GeneratedDocument, ReportJob
 from app.schemas import (
     CheckoutSessionRequest,
     CheckoutSessionResponse,
@@ -41,6 +44,8 @@ async def checkout_session(
     assessment = await get_assessment_by_public_id(db, body.assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Assessment not found", "details": []}})
+    if body.customer_email is not None:
+        assessment.email = body.customer_email
     result = await create_checkout_session(
         db,
         assessment_id=assessment.id,
@@ -48,6 +53,7 @@ async def checkout_session(
         sku=body.sku,
         success_url=body.success_url,
         cancel_url=body.cancel_url,
+        customer_email=body.customer_email or assessment.email,
     )
     return CheckoutSessionResponse(**result)
 
@@ -113,14 +119,23 @@ async def get_report_status(
 
 @router.get("/downloads/{token}")
 async def download_file(token: str, db: AsyncSession = Depends(get_db)):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     result = await db.execute(select(DownloadToken).where(DownloadToken.token == token))
     row = result.scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Invalid token", "details": []}})
-    if row.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=410, detail={"error": {"code": "gone", "message": "Download link expired", "details": []}})
+    if row.expires_at < datetime.now(UTC):
+        entitlement = (
+            await db.execute(
+                select(Entitlement).where(
+                    Entitlement.assessment_id == row.assessment_id,
+                    Entitlement.status == "active",
+                )
+            )
+        ).scalar_one_or_none()
+        if not entitlement:
+            raise HTTPException(status_code=410, detail={"error": {"code": "gone", "message": "Download link expired", "details": []}})
 
     data = download_bytes(row.file_path)
     filename = row.file_path.rsplit("/", 1)[-1]

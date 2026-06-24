@@ -8,9 +8,11 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 
 from app import config
 from app.models import Entitlement
+from app.schemas import CheckoutSessionRequest, GenerateDocumentRequest
 from app.services import payment_service
 
 
@@ -80,6 +82,7 @@ async def test_dodo_checkout_creates_pending_entitlement_with_product_metadata(m
         sku="evidence_pack",
         success_url="https://euaiact.originalnexus.com/checkout/success",
         cancel_url="https://euaiact.originalnexus.com/pricing",
+        customer_email="buyer@example.com",
     )
 
     assert result == {
@@ -98,6 +101,7 @@ async def test_dodo_checkout_creates_pending_entitlement_with_product_metadata(m
         "assessment_id": "42",
         "assessment_public_id": "aia_123",
         "sku": "evidence_pack",
+        "customer_email": "buyer@example.com",
     }
     assert session.flushed
     assert len(session.added) == 1
@@ -187,3 +191,39 @@ def test_dodo_webhook_signature_ignores_secret_manager_trailing_newline(monkeypa
     event = payment_service._verify_dodo_signature(payload, _signed_headers(payload))
 
     assert event["type"] == "payment.succeeded"
+
+
+def test_starter_report_sku_is_not_accepted():
+    with pytest.raises(ValidationError):
+        CheckoutSessionRequest(
+            assessment_id="aia_123",
+            sku="starter_report",
+            success_url="https://example.com/success",
+            cancel_url="https://example.com/cancel",
+        )
+
+    with pytest.raises(ValidationError):
+        GenerateDocumentRequest(assessment_id="aia_123", sku="starter_report")
+
+
+@pytest.mark.asyncio
+async def test_prod_without_payment_provider_never_auto_grants(monkeypatch):
+    monkeypatch.setattr(config.settings, "dev_mode", False, raising=False)
+    monkeypatch.setattr(config.settings, "dodo_payments_api_key", None, raising=False)
+    monkeypatch.setattr(config.settings, "stripe_secret_key", None, raising=False)
+
+    session = _FakeSession()
+
+    with pytest.raises(RuntimeError, match="Payment provider not configured"):
+        await payment_service.create_checkout_session(
+            session,
+            assessment_id=42,
+            assessment_public_id="aia_123",
+            sku="evidence_pack",
+            success_url="https://example.com/success",
+            cancel_url="https://example.com/cancel",
+            customer_email=None,
+        )
+
+    assert session.added == []
+    assert session.flushed is False

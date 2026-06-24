@@ -1,0 +1,74 @@
+{
+  "rules": [
+    {
+      "rule_code": "annex_iii_employment_recruitment_selection",
+      "name": "Annex III employment - recruitment/selection",
+      "description": "System is intended to analyse and filter job applications and evaluate candidates.",
+      "priority": 10,
+      "phase": "high_risk_annex_iii",
+      "risk_tier_slug": "high_risk",
+      "legal_reference_key": "annex_iii_4a",
+      "condition_json": {
+        "all": [
+          { "field": "use_case_category", "operator": "equals", "value": "employment_recruitment" },
+          {
+            "field": "system_function",
+            "operator": "contains_any",
+            "value": ["filter_applications", "rank_candidates", "evaluate_candidates"]
+          },
+          { "field": "affects_natural_persons", "operator": "is_true" }
+        ]
+      }
+    },
+    {
+      "rule_code": "annex_iii_credit_scoring",
+      "name": "Annex III - creditworthiness evaluation",
+      "description": "System evaluates creditworthiness, loan eligibility, or insurance risk/pricing for natural persons.",
+      "priority": 20,
+      "phase": "high_risk_annex_iii",
+      "risk_tier_slug": "high_risk",
+      "legal_reference_key": "annex_iii_5b",
+      "condition_json": {
+        "all": [
+          { "field": "use_case_category", "operator": "equals", "value": "credit_financial" },
+          {
+            "field": "system_function",
+            "operator": "contains_any",
+            "value": ["credit_scoring", "loan_eligibility", "insurance_pricing"]
+          },
+          { "field": "affects_natural_persons", "operator": "is_true" }
+        ]
+      }
+    },
+    {
+      "rule_code": "limited_risk_chatbot_transparency",
+      "name": "Limited-risk - chatbot transparency",
+      "description": "System interacts directly with users and may require AI interaction disclosure.",
+      "priority": 30,
+      "phase": "limited_risk",
+      "risk_tier_slug": "limited_risk",
+      "legal_reference_key": "article_50",
+      "condition_json": {
+        "all": [
+          { "field": "use_case_category", "operator": "equals", "value": "customer_support" },
+          { "field": "interacts_with_users", "operator": "is_true" }
+        ]
+      }
+    },
+    {
+      "rule_code": "limited_risk_deepfake",
+      "name": "Limited-risk - synthetic media disclosure",
+      "description": "System generates synthetic audio, image, or video content and may require disclosure.",
+      "priority": 40,
+      "phase": "limited_risk",
+      "risk_tier_slug": "limited_risk",
+      "legal_reference_key": "article_50",
+      "condition_json": {
+        "all": [
+          { "field": "use_case_category", "operator": "equals", "value": "content_generation" },
+          { "field": "generates_synthetic_media", "operator": "is_true" }
+        ]
+      }
+    }
+  ]
+}

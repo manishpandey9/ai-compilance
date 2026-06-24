@@ -73,6 +73,7 @@ export type SEOPageResponse = {
   last_reviewed_at?: string;
   rule_version?: number;
   index_supported?: boolean;
+  legal_review_status?: "pending_sme" | "approved";
   references?: { citation_label: string; source_id: string }[];
 };
 
@@ -99,8 +100,10 @@ export type ReportStatusResponse = {
 
 const WEB_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000";
 
+export type CheckoutSku = "evidence_pack";
+
 export const api = {
-  createAssessment: (body: { company_name?: string; system_name?: string }) =>
+  createAssessment: (body: { company_name?: string; system_name?: string; email?: string }) =>
     apiFetch<CreateAssessmentResponse>("/assessments", {
       method: "POST",
       body: JSON.stringify(body),
@@ -110,7 +113,7 @@ export const api = {
 
   patchAssessment: (
     id: string,
-    body: { company_name?: string; system_name?: string },
+    body: { company_name?: string; system_name?: string; email?: string },
   ) =>
     apiFetch<AssessmentResponse>(`/assessments/${id}`, {
       method: "PATCH",
@@ -139,7 +142,7 @@ export const api = {
       "/pages?limit=100",
     ),
 
-  createCheckout: (assessmentId: string, sku: "starter_report" | "evidence_pack") =>
+  createCheckout: (assessmentId: string, sku: CheckoutSku, customerEmail?: string) =>
     apiFetch<{ checkout_url: string; session_id: string }>("/checkout/session", {
       method: "POST",
       body: JSON.stringify({
@@ -147,10 +150,11 @@ export const api = {
         sku,
         success_url: `${WEB_BASE}/checkout/success`,
         cancel_url: `${WEB_BASE}/pricing`,
+        customer_email: customerEmail || undefined,
       }),
     }),
 
-  generateDocuments: (assessmentId: string, sku: "starter_report" | "evidence_pack") =>
+  generateDocuments: (assessmentId: string, sku: CheckoutSku) =>
     apiFetch<{ report_id: string; status: string }>("/documents/generate", {
       method: "POST",
       body: JSON.stringify({ assessment_id: assessmentId, sku }),

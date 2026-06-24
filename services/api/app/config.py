@@ -22,17 +22,17 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None
-    stripe_price_starter_report: str | None = None
     stripe_price_evidence_pack: str | None = None
 
     dodo_payments_api_key: str | None = None
     dodo_payments_webhook_key: str | None = None
     dodo_payments_environment: str = "live_mode"
-    dodo_product_starter_report: str | None = None
     dodo_product_evidence_pack: str | None = None
 
     admin_api_key: str = "dev-admin-key"
     web_base_url: str = "http://localhost:3000"
+    resend_api_key: str | None = None
+    transactional_from_email: str = "AI Act Navigator <noreply@originalnexus.com>"
     download_token_ttl_seconds: int = 3600
     dev_mode: bool = True
 

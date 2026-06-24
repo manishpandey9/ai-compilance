@@ -26,6 +26,7 @@ class ErrorResponse(BaseModel):
 class CreateAssessmentRequest(BaseModel):
     company_name: str | None = None
     system_name: str | None = None
+    email: str | None = None
 
 
 class CreateAssessmentResponse(BaseModel):
@@ -123,6 +124,7 @@ class SEOPageResponse(BaseModel):
     last_reviewed_at: datetime | None = None
     rule_version: int | None = None
     index_supported: bool = True
+    legal_review_status: Literal["pending_sme", "approved"] = "pending_sme"
     references: list[dict[str, str]] = Field(default_factory=list)
 
 
@@ -133,9 +135,10 @@ class HealthResponse(BaseModel):
 
 class CheckoutSessionRequest(BaseModel):
     assessment_id: str
-    sku: Literal["starter_report", "evidence_pack"]
+    sku: Literal["evidence_pack"]
     success_url: str
     cancel_url: str
+    customer_email: str | None = None
 
 
 class CheckoutSessionResponse(BaseModel):
@@ -145,7 +148,7 @@ class CheckoutSessionResponse(BaseModel):
 
 class GenerateDocumentRequest(BaseModel):
     assessment_id: str
-    sku: Literal["starter_report", "evidence_pack"]
+    sku: Literal["evidence_pack"]
 
 
 class GenerateDocumentResponse(BaseModel):

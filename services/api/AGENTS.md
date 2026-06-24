@@ -38,6 +38,6 @@ uv run uvicorn app.main:app --reload
 
 ## Adding a risk rule
 
-1. Add row to seed or admin API
-2. Add fixture in `tests/test_risk_engine.py` or `tests/fixtures/`
+1. Add the rule to `../../data/seeds/rules.json` and keep the seed loader in `app/scripts/seed.py` validating that file
+2. Add a fixture in `tests/fixtures/`
 3. Run `uv run pytest` — must pass before publish

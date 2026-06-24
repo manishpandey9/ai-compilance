@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "name": "hr_recruitment_high_risk",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "employment_recruitment",
+        "affects_natural_persons": true,
+        "system_function": ["filter_applications", "rank_candidates"]
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "high_risk",
+        "confidence": "high",
+        "triggered_rule_codes": ["annex_iii_employment_recruitment_selection"]
+      }
+    },
+    {
+      "name": "credit_scoring_high_risk",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "credit_financial",
+        "affects_natural_persons": true,
+        "system_function": ["credit_scoring"]
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "high_risk",
+        "confidence": "high",
+        "triggered_rule_codes": ["annex_iii_credit_scoring"]
+      }
+    },
+    {
+      "name": "chatbot_transparency_limited_risk",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "customer_support",
+        "affects_natural_persons": true,
+        "interacts_with_users": true
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "limited_risk",
+        "confidence": "medium",
+        "triggered_rule_codes": ["limited_risk_chatbot_transparency"]
+      }
+    },
+    {
+      "name": "synthetic_media_limited_risk",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "content_generation",
+        "affects_natural_persons": false,
+        "generates_synthetic_media": true
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "limited_risk",
+        "confidence": "medium",
+        "triggered_rule_codes": ["limited_risk_deepfake"]
+      }
+    },
+    {
+      "name": "outside_eu_scope",
+      "facts": {
+        "eu_market_exposure": "no",
+        "actor_role": "provider",
+        "use_case_category": "employment_recruitment",
+        "affects_natural_persons": true
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "minimal_risk",
+        "confidence": "high",
+        "edge_flags_contains": ["outside_eu_scope"],
+        "triggered_rule_codes": []
+      }
+    },
+    {
+      "name": "missing_required_facts",
+      "facts": {
+        "eu_market_exposure": "yes"
+      },
+      "expected": {
+        "classification_status": "insufficient_information",
+        "risk_tier": null,
+        "confidence": null,
+        "missing_fields": ["actor_role", "affects_natural_persons", "use_case_category"],
+        "triggered_rule_codes": []
+      }
+    },
+    {
+      "name": "unsupported_healthcare_routes_to_expert_review",
+      "prepare_facts": true,
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "healthcare",
+        "affects_natural_persons": true
+      },
+      "expected": {
+        "classification_status": "needs_expert_review",
+        "risk_tier": "high_risk",
+        "confidence": "low",
+        "edge_flags_contains": ["possibly_high_risk"],
+        "triggered_rule_codes": []
+      }
+    },
+    {
+      "name": "article_6_3_downgrade_without_profiling",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "employment_recruitment",
+        "affects_natural_persons": true,
+        "system_function": ["filter_applications"],
+        "article_6_3_preparatory_task": true,
+        "article_6_3_profiling": false
+      },
+      "expected": {
+        "classification_status": "needs_expert_review",
+        "risk_tier": "limited_risk",
+        "confidence": "low",
+        "edge_flags_contains": ["article_6_3_exception_claimed"],
+        "triggered_rule_codes": ["annex_iii_employment_recruitment_selection"]
+      }
+    },
+    {
+      "name": "article_6_3_profiling_override_remains_high_risk",
+      "facts": {
+        "eu_market_exposure": "yes",
+        "actor_role": "provider",
+        "use_case_category": "employment_recruitment",
+        "affects_natural_persons": true,
+        "system_function": ["filter_applications"],
+        "article_6_3_preparatory_task": true,
+        "article_6_3_profiling": true
+      },
+      "expected": {
+        "classification_status": "classified",
+        "risk_tier": "high_risk",
+        "confidence": "high",
+        "triggered_rule_codes": ["annex_iii_employment_recruitment_selection"]
+      }
+    }
+  ]
+}

@@ -111,7 +111,7 @@ def run_generation_sync(session: Session, report_id: str) -> None:
         )
 
         files = build_pack_files(ctx, job.sku)
-        zip_name = "evidence_pack.zip" if job.sku == "evidence_pack" else "starter_report.zip"
+        zip_name = "evidence_pack.zip"
         zip_data = build_zip(files)
 
         prefix = f"reports/{assessment.public_id}/{report_id}"

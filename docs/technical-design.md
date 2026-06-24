@@ -71,7 +71,7 @@ Three product truths drive every technical decision in this document:
 
 ### 1.2 Business model the architecture must serve
 
-Free risk check (lead magnet) → **$199 starter memo** → **$699 evidence-prep pack** → **$5k+ readiness sprint** → **$499+/mo workspace** (PRD §5, §23). The architecture is optimized so that the **marginal cost of one paid pack is a few cents** of compute and storage, while the **price is $199–$699** — i.e. >99% gross margin on the digital product, with services as the high-touch upsell. See [cost-model.md](./cost-model.md).
+Free risk check (lead magnet) → **$20 evidence-prep pack** → **$5k+ readiness sprint** → **$499+/mo workspace** (PRD §5, §23). The architecture is optimized so that the **marginal cost of one paid pack is a few cents** of compute and storage, while the one-time digital pack remains self-serve and low-friction. See [cost-model.md](./cost-model.md).
 
 ---
 

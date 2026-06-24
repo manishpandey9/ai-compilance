@@ -52,7 +52,7 @@ class RenderContext:
     answers: dict[str, Any] = field(default_factory=dict)
     answer_rows: list[tuple[str, str]] = field(default_factory=list)
     missing_variables: list[str] = field(default_factory=list)
-    pack_sku: str = "starter_report"
+    pack_sku: str = "evidence_pack"
     required_documents: list[str] = field(default_factory=list)
     is_high_risk: bool = False
     needs_fria: bool = False

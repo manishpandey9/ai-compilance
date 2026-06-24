@@ -13,7 +13,7 @@
 - LLMs never decide legal status; all classification claims must refer to deterministic rules.
 - Paid documents are evidence-preparation drafts, not legal advice or final audit approval.
 - Do not delete unsupported pSEO pages in this pass; only remove unsupported pages from sitemap exposure.
-- Keep existing payment SKUs and prices: `starter_report` at `$199`, `evidence_pack` at `$699`.
+- Superseded by `HANDOFF_PLAN.md` on 2026-06-24: keep one paid SKU, `evidence_pack`, priced at `$20`; `starter_report` is removed.
 - Verify each task before starting the next task.
 
 ---
@@ -97,7 +97,7 @@ Expected: build exits 0.
 
 **Interfaces:**
 - Produces homepage copy that says "evidence-pack prep" rather than final audit readiness.
-- Produces pricing copy that explains free, starter memo, and evidence-prep pack.
+- Produces pricing copy that explains the free preview and $20 evidence-prep pack.
 - Produces checker/result copy showing current coverage and review territory.
 
 - [ ] **Step 1: Update source-of-truth docs**
@@ -147,4 +147,3 @@ Expected: build exits 0.
 Run: `git diff --stat`
 
 Expected: only planned files plus pre-existing deployment changes are present.
-

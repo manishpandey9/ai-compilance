@@ -25,6 +25,9 @@ async def create_assessment(
     assessment = await assessment_dal.create_assessment(
         db, company_name=body.company_name, system_name=body.system_name
     )
+    if body.email is not None:
+        assessment.email = body.email
+        await db.flush()
     return CreateAssessmentResponse(
         assessment_id=assessment.public_id,
         status=assessment.status,

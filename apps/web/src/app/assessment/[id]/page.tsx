@@ -15,6 +15,7 @@ import { api, AssessmentResponse, ClassifyResponse, NextQuestion } from "@/lib/a
 import { loadAssessmentDraft, saveAssessmentDraft } from "@/lib/assessment-draft";
 import { cn } from "@/lib/cn";
 import { focusRingLight } from "@/lib/focus";
+import { EVIDENCE_PACK_PRICE_LABEL, EVIDENCE_PACK_SKU } from "@/lib/product";
 
 function MultiQuestion({
   question,
@@ -212,11 +213,15 @@ function ResultView({ result }: { result: ClassifyResponse }) {
             <Button
               surface="light"
               onClick={async () => {
-                const { checkout_url } = await api.createCheckout(result.assessment_id, "evidence_pack");
+                const { checkout_url } = await api.createCheckout(
+                  result.assessment_id,
+                  EVIDENCE_PACK_SKU,
+                  loadAssessmentDraft().email || undefined,
+                );
                 window.location.href = checkout_url;
               }}
             >
-              Buy evidence-prep pack ($20)
+              Buy evidence-prep pack ({EVIDENCE_PACK_PRICE_LABEL})
             </Button>
           </div>
         </section>
@@ -241,6 +246,7 @@ export default function AssessmentWizardPage() {
       saveAssessmentDraft({
         company: draft.company || res.company_name || "",
         system: draft.system || res.system_name || "",
+        email: draft.email || "",
         assessmentId,
         answers: res.answers,
       });

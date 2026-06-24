@@ -14,6 +14,7 @@ export default function ComplianceCheckerPage() {
   const router = useRouter();
   const [company, setCompany] = useState("");
   const [system, setSystem] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resumeId, setResumeId] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export default function ComplianceCheckerPage() {
     const draft = loadAssessmentDraft();
     setCompany(draft.company);
     setSystem(draft.system);
+    setEmail(draft.email);
     if (!draft.assessmentId) return;
 
     api
@@ -42,15 +44,16 @@ export default function ComplianceCheckerPage() {
       ...draft,
       company,
       system,
+      email,
       assessmentId: draft.assessmentId ?? resumeId ?? undefined,
     });
-  }, [company, system, resumeId]);
+  }, [company, system, email, resumeId]);
 
   async function goToAssessment(assessmentId: string, claimToken?: string) {
     if (typeof window !== "undefined" && claimToken) {
       sessionStorage.setItem(`claim_${assessmentId}`, claimToken);
     }
-    saveAssessmentDraft({ company, system, assessmentId });
+    saveAssessmentDraft({ company, system, email, assessmentId });
     router.push(`/assessment/${assessmentId}`);
   }
 
@@ -67,6 +70,7 @@ export default function ComplianceCheckerPage() {
             await api.patchAssessment(draft.assessmentId, {
               company_name: company || undefined,
               system_name: system || undefined,
+              email: email || undefined,
             });
             await goToAssessment(draft.assessmentId);
             return;
@@ -79,6 +83,7 @@ export default function ComplianceCheckerPage() {
       const res = await api.createAssessment({
         company_name: company || undefined,
         system_name: system || undefined,
+        email: email || undefined,
       });
       await goToAssessment(res.assessment_id, res.claim_token);
     } catch (err) {
@@ -141,6 +146,16 @@ export default function ComplianceCheckerPage() {
                 value={system}
                 onChange={(e) => setSystem(e.target.value)}
                 placeholder="HireRank"
+              />
+            </Field>
+            <Field label="Email for receipt and re-download link" surface="light">
+              <Input
+                surface="light"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="founder@acme.ai"
+                autoComplete="email"
               />
             </Field>
             {error && <FormError message={error} />}

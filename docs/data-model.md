@@ -34,7 +34,7 @@ This document is the exhaustive schema specification. It expands PRD §13 with c
 | `confidence_level` | `low`, `medium`, `high` |
 | `document_format` | `pdf`, `docx`, `md`, `csv`, `xlsx`, `zip` |
 | `seo_page_type` | `industry`, `use_case`, `template`, `article`, `annex`, `comparison`, `role` |
-| `entitlement_sku` | `starter_report`, `evidence_pack`, `readiness_sprint`, `team_workspace` |
+| `entitlement_sku` | `evidence_pack`, `readiness_sprint`, `team_workspace` |
 | `entitlement_status` | `pending`, `active`, `revoked`, `expired` |
 
 ---

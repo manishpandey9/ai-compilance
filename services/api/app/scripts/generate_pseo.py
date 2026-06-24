@@ -15,7 +15,7 @@ from app.config import settings
 from app.models import LegalReference, RuleSet
 from app.services.seo_service import compose_page_content, upsert_seo_page
 
-from app.data.pseo_catalog import PSEO_CATALOG
+from app.data.pseo_catalog import PSEO_CATALOG, reviewed_citation_for_slug
 
 
 async def generate_pages(session: AsyncSession) -> int:
@@ -43,7 +43,7 @@ async def generate_pages(session: AsyncSession) -> int:
             use_case=use_case,
             use_case_name=use_case_name,
             risk_hint=risk_hint,
-            citation=f"Regulation (EU) 2024/1689 {citation}",
+            citation=f"Regulation (EU) 2024/1689 {reviewed_citation_for_slug(slug)}",
         )
         page_type = "template" if industry == "templates" else "use_case"
         await upsert_seo_page(

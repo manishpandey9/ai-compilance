@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/layout/footer";
 import { AppShell, BackLink, MarketingHeader, PageContainer } from "@/components/layout/shell";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { EVIDENCE_PACK_PRICE_LABEL } from "@/lib/product";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -21,7 +22,7 @@ const PLANS = [
   },
   {
     name: "Evidence-prep pack",
-    price: "$20",
+    price: EVIDENCE_PACK_PRICE_LABEL,
     summary:
       "Editable first drafts for customer, auditor, or internal review: full memo, Annex IV outline, human oversight plan, FRIA template when required, and evidence tracker.",
     highlight: true,

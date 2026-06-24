@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.data.pseo_catalog import is_index_supported, legal_review_status_for_slug
 from app.db import get_db
-from app.data.pseo_catalog import is_index_supported
 from app.models import LegalReference, SEOPage, SEOPageReference
 from app.schemas import SEOPageResponse
 
@@ -29,6 +29,7 @@ async def list_pages(
                 "page_type": p.page_type,
                 "last_reviewed_at": p.last_reviewed_at,
                 "index_supported": is_index_supported(p.slug),
+                "legal_review_status": legal_review_status_for_slug(p.slug),
             }
             for p in pages
         ]
@@ -71,5 +72,6 @@ async def get_page(slug: str, db: AsyncSession = Depends(get_db)) -> SEOPageResp
         last_reviewed_at=page.last_reviewed_at,
         rule_version=page.rule_version,
         index_supported=is_index_supported(page.slug),
+        legal_review_status=legal_review_status_for_slug(page.slug),
         references=references,
     )

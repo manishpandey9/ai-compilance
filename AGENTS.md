@@ -24,13 +24,13 @@ docs/             → design source of truth (read before large changes)
 
 | Task | Location |
 |---|---|
-| Add a risk rule | `data/seeds/rules.json` + fixture in `services/api/tests/fixtures/` |
+| Add a risk rule | `data/seeds/rules.json` + fixture in `services/api/tests/fixtures/` + seed loader in `services/api/app/scripts/seed.py` |
 | Rule engine logic | `services/api/app/rules/` (pure, no I/O) |
 | API endpoints | `services/api/app/public_api/`, `admin_api/` — add `TESTING.md` per package |
 | DB schema | `services/api/app/models.py` + Alembic migration |
-| pSEO pages | `apps/web/src/app/(marketing)/eu-ai-act/` + `seo_page` seeds |
-| Assessment wizard | `apps/web/src/app/(app)/assessment/` + `data/seeds/questions.json` |
-| Document templates | `services/api/app/documents/templates/` |
+| pSEO pages | `apps/web/src/app/eu-ai-act/` + `services/api/app/data/pseo_catalog.py` + `services/api/app/scripts/generate_pseo.py` |
+| Assessment wizard | `apps/web/src/app/assessment/` + `services/api/app/services/assessment_service.py` |
+| Document templates | `services/api/app/documents/` |
 
 ## Local dev
 

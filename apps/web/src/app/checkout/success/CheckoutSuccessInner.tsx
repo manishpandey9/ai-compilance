@@ -7,11 +7,12 @@ import { SiteFooter } from "@/components/layout/footer";
 import { AppShell, BackLink, MarketingHeader, PageContainer } from "@/components/layout/shell";
 import { ButtonLink } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { EVIDENCE_PACK_SKU } from "@/lib/product";
 
 export default function CheckoutSuccessInner() {
   const params = useSearchParams();
   const assessmentId = params.get("assessment_id");
-  const sku = (params.get("sku") as "starter_report" | "evidence_pack") || "evidence_pack";
+  const sku = EVIDENCE_PACK_SKU;
   const [status, setStatus] = useState("Confirming purchase…");
   const [reportId, setReportId] = useState<string | null>(null);
 
@@ -19,7 +20,7 @@ export default function CheckoutSuccessInner() {
     if (!assessmentId) return;
     (async () => {
       try {
-        const label = sku === "starter_report" ? "starter memo" : "evidence-prep pack";
+        const label = "evidence-prep pack";
         let gen: { report_id: string; status: string } | null = null;
         for (let attempt = 1; attempt <= 8; attempt += 1) {
           try {

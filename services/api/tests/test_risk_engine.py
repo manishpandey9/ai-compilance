@@ -1,127 +1,84 @@
-"""Rule engine golden tests — PRD §21.1 fixtures."""
+"""Rule engine fixture tests — these gate rule publishing."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
 
 from app.rules.engine import RuleRecord, classify
+from app.services.assessment_facts import prepare_classification_facts
 
-HR_RULE = RuleRecord(
-    rule_code="annex_iii_employment_recruitment_selection",
-    name="Annex III employment",
-    phase="high_risk_annex_iii",
-    priority=10,
-    risk_tier_slug="high_risk",
-    condition_json={
-        "all": [
-            {"field": "use_case_category", "operator": "equals", "value": "employment_recruitment"},
-            {
-                "field": "system_function",
-                "operator": "contains_any",
-                "value": ["filter_applications", "rank_candidates", "evaluate_candidates"],
-            },
-            {"field": "affects_natural_persons", "operator": "is_true"},
-        ]
-    },
-    legal_citation="Regulation (EU) 2024/1689 Annex III point 4(a)",
-    rationale_template="System analyses job applications for recruitment.",
-)
+ROOT = Path(__file__).resolve().parents[3]
+RULES_PATH = ROOT / "data" / "seeds" / "rules.json"
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
 
-CREDIT_RULE = RuleRecord(
-    rule_code="annex_iii_credit_scoring",
-    name="Annex III credit",
-    phase="high_risk_annex_iii",
-    priority=20,
-    risk_tier_slug="high_risk",
-    condition_json={
-        "all": [
-            {"field": "use_case_category", "operator": "equals", "value": "credit_financial"},
-            {"field": "system_function", "operator": "contains_any", "value": ["credit_scoring", "loan_eligibility"]},
-            {"field": "affects_natural_persons", "operator": "is_true"},
-        ]
-    },
-    legal_citation="Regulation (EU) 2024/1689 Annex III point 5(b)",
-    rationale_template="Evaluates creditworthiness.",
-)
-
-CHATBOT_RULE = RuleRecord(
-    rule_code="limited_risk_chatbot",
-    name="Chatbot transparency",
-    phase="limited_risk",
-    priority=30,
-    risk_tier_slug="limited_risk",
-    condition_json={
-        "all": [
-            {"field": "use_case_category", "operator": "equals", "value": "customer_support"},
-            {"field": "interacts_with_users", "operator": "is_true"},
-        ]
-    },
-    legal_citation="Regulation (EU) 2024/1689 Article 50",
-    rationale_template="Chatbot interacts with users.",
-)
-
-RULES = [HR_RULE, CREDIT_RULE, CHATBOT_RULE]
+LEGAL_CITATIONS = {
+    "annex_iii_4a": "Regulation (EU) 2024/1689 Annex III point 4(a)",
+    "annex_iii_5b": "Regulation (EU) 2024/1689 Annex III point 5(b)",
+    "article_50": "Regulation (EU) 2024/1689 Article 50",
+}
 
 
-def test_resume_screening_high_risk():
-    facts = {
-        "eu_market_exposure": "yes",
-        "actor_role": "provider",
-        "use_case_category": "employment_recruitment",
-        "affects_natural_persons": True,
-        "system_function": ["filter_applications", "rank_candidates"],
-    }
-    result = classify(facts, RULES)
-    assert result.classification_status == "classified"
-    assert result.risk_tier == "high_risk"
-    assert any(t.rule_code == "annex_iii_employment_recruitment_selection" for t in result.triggered_rules)
+def _load_rules() -> list[RuleRecord]:
+    seed = json.loads(RULES_PATH.read_text())
+    return [
+        RuleRecord(
+            rule_code=row["rule_code"],
+            name=row["name"],
+            phase=row["phase"],
+            priority=row["priority"],
+            risk_tier_slug=row["risk_tier_slug"],
+            condition_json=row["condition_json"],
+            legal_citation=LEGAL_CITATIONS[row["legal_reference_key"]],
+            rationale_template=row.get("rationale_template") or row["name"],
+        )
+        for row in seed["rules"]
+    ]
 
 
-def test_credit_scoring_high_risk():
-    facts = {
-        "eu_market_exposure": "yes",
-        "actor_role": "provider",
-        "use_case_category": "credit_financial",
-        "affects_natural_persons": True,
-        "system_function": ["credit_scoring"],
-    }
-    result = classify(facts, RULES)
-    assert result.risk_tier == "high_risk"
+def _fixture_cases() -> list[dict[str, Any]]:
+    cases: list[dict[str, Any]] = []
+    for path in sorted(FIXTURE_DIR.glob("*.json")):
+        cases.extend(json.loads(path.read_text())["cases"])
+    return cases
 
 
-def test_customer_chatbot_limited_risk():
-    facts = {
-        "eu_market_exposure": "yes",
-        "actor_role": "provider",
-        "use_case_category": "customer_support",
-        "affects_natural_persons": True,
-        "interacts_with_users": True,
-    }
-    result = classify(facts, RULES)
-    assert result.risk_tier == "limited_risk"
+def test_rule_fixture_suite_has_coverage():
+    names = {case["name"] for case in _fixture_cases()}
+
+    assert "hr_recruitment_high_risk" in names
+    assert "credit_scoring_high_risk" in names
+    assert "chatbot_transparency_limited_risk" in names
+    assert "synthetic_media_limited_risk" in names
+    assert "outside_eu_scope" in names
+    assert "missing_required_facts" in names
+    assert "unsupported_healthcare_routes_to_expert_review" in names
+    assert "article_6_3_downgrade_without_profiling" in names
+    assert "article_6_3_profiling_override_remains_high_risk" in names
 
 
-def test_spam_filter_minimal_risk():
-    facts = {
-        "eu_market_exposure": "yes",
-        "actor_role": "provider",
-        "use_case_category": "other",
-        "affects_natural_persons": False,
-    }
-    result = classify(facts, RULES)
-    assert result.risk_tier == "minimal_risk"
+def test_rule_engine_fixtures():
+    rules = _load_rules()
 
+    for case in _fixture_cases():
+        facts = case["facts"]
+        if case.get("prepare_facts"):
+            facts = prepare_classification_facts(facts)
 
-def test_insufficient_information():
-    facts = {"eu_market_exposure": "yes"}
-    result = classify(facts, RULES)
-    assert result.classification_status == "insufficient_information"
-    assert "use_case_category" in result.missing_fields
+        result = classify(facts, rules)
+        expected = case["expected"]
 
+        assert result.classification_status == expected["classification_status"], case["name"]
+        assert result.risk_tier == expected.get("risk_tier"), case["name"]
+        assert result.confidence == expected.get("confidence"), case["name"]
 
-def test_no_eu_exposure():
-    facts = {
-        "eu_market_exposure": "no",
-        "actor_role": "provider",
-        "use_case_category": "employment_recruitment",
-        "affects_natural_persons": True,
-    }
-    result = classify(facts, RULES)
-    assert result.risk_tier == "minimal_risk"
-    assert "outside_eu_scope" in result.edge_flags
+        expected_missing = expected.get("missing_fields")
+        if expected_missing is not None:
+            assert sorted(result.missing_fields) == sorted(expected_missing), case["name"]
+
+        for flag in expected.get("edge_flags_contains", []):
+            assert flag in result.edge_flags, case["name"]
+
+        triggered_codes = {rule.rule_code for rule in result.triggered_rules}
+        assert triggered_codes == set(expected.get("triggered_rule_codes", [])), case["name"]

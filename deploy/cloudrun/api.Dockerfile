@@ -15,6 +15,7 @@ COPY services/api/pyproject.toml services/api/uv.lock ./
 COPY services/api/alembic.ini ./
 COPY services/api/alembic ./alembic
 COPY services/api/app ./app
+COPY data ./data
 
 RUN uv sync --frozen --no-dev
 

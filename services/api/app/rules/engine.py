@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from typing import Any
 
 from app.rules.conditions import ConditionEvaluationError, evaluate_condition
@@ -71,6 +71,18 @@ def _build_rationale(rule: RuleRecord, facts: dict[str, Any]) -> str:
         except (KeyError, ValueError):
             pass
     return rule.name
+
+
+ARTICLE_6_3_LIMBS = (
+    "article_6_3_narrow_procedural_task",
+    "article_6_3_improves_prior_human_work",
+    "article_6_3_detects_deviation_without_replacing_review",
+    "article_6_3_preparatory_task",
+)
+
+
+def _article_6_3_exception_claimed(facts: dict[str, Any]) -> bool:
+    return any(facts.get(key) is True for key in ARTICLE_6_3_LIMBS)
 
 
 def classify(
@@ -143,6 +155,27 @@ def classify(
             break
         if matched_tier in {"high_risk"}:
             break
+
+    if (
+        matched_tier == "high_risk"
+        and _article_6_3_exception_claimed(facts)
+        and facts.get("article_6_3_profiling") is False
+    ):
+        return ClassificationOutput(
+            classification_status="needs_expert_review",
+            risk_tier="limited_risk",
+            confidence="low",
+            primary_actor_role=primary_role,
+            secondary_actor_roles=secondary_roles,
+            triggered_rules=triggered,
+            missing_fields=[],
+            edge_flags=["article_6_3_exception_claimed"],
+            result_json={
+                "triggered_rules": [t.__dict__ for t in triggered],
+                "facts_used": {k: facts[k] for k in REQUIRED_FACT_KEYS if k in facts},
+                "article_6_3_exception_claimed": True,
+            },
+        )
 
     if matched_tier == "prohibited":
         confidence = "high"

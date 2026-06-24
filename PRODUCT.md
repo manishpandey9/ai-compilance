@@ -17,7 +17,7 @@ Context: users are under deadline pressure (EU AI Act enforcement timeline), ske
 
 EU AI Act Compliance Navigator turns a structured description of an AI system into a **source-cited compliance path**: risk classification → role classification → obligation matrix → document checklist → evidence-preparation pack.
 
-Free risk check is acquisition; the paid output is a **review-ready evidence-preparation pack** ($199–$699), not a generic PDF or final legal opinion. Success means a user leaves knowing their tier, obligations, and next documents — and can defend the draft result to a customer, auditor, or counsel because every conclusion traces to a versioned rule and legal source.
+Free risk check is acquisition; the paid output is a **review-ready evidence-preparation pack** ($20), not a generic PDF or final legal opinion. Success means a user leaves knowing their tier, obligations, and next documents — and can defend the draft result to a customer, auditor, or counsel because every conclusion traces to a versioned rule and legal source.
 
 ## Brand Personality
 

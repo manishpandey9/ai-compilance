@@ -4,17 +4,18 @@ export type AssessmentDraft = {
   assessmentId?: string;
   company: string;
   system: string;
+  email: string;
   answers?: Record<string, unknown>;
 };
 
 export function loadAssessmentDraft(): AssessmentDraft {
-  if (typeof window === "undefined") return { company: "", system: "" };
+  if (typeof window === "undefined") return { company: "", system: "", email: "" };
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY);
-    if (!raw) return { company: "", system: "" };
-    return { company: "", system: "", ...JSON.parse(raw) };
+    if (!raw) return { company: "", system: "", email: "" };
+    return { company: "", system: "", email: "", ...JSON.parse(raw) };
   } catch {
-    return { company: "", system: "" };
+    return { company: "", system: "", email: "" };
   }
 }
 

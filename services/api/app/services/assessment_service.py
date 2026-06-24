@@ -124,6 +124,54 @@ BASE_QUESTIONS: list[dict[str, Any]] = [
     },
 ]
 
+ARTICLE_6_3_QUESTIONS: list[dict[str, Any]] = [
+    {
+        "question_key": "article_6_3_narrow_procedural_task",
+        "type": "boolean",
+        "label": "Is the system only performing a narrow procedural task?",
+        "help": (
+            "NEEDS SME REVIEW: Article 6(3) may exclude some Annex III systems when they do not "
+            "pose a significant risk of harm and only perform a narrow procedural task."
+        ),
+    },
+    {
+        "question_key": "article_6_3_improves_prior_human_work",
+        "type": "boolean",
+        "label": "Does it only improve the result of a previously completed human activity?",
+        "help": (
+            "NEEDS SME REVIEW: This records whether the system merely improves a prior human "
+            "result rather than replacing or materially determining the decision."
+        ),
+    },
+    {
+        "question_key": "article_6_3_detects_deviation_without_replacing_review",
+        "type": "boolean",
+        "label": "Does it detect decision patterns or deviations without replacing human review?",
+        "help": (
+            "NEEDS SME REVIEW: Article 6(3) includes a narrow limb for detecting decision-making "
+            "patterns or deviations while preserving meaningful human assessment."
+        ),
+    },
+    {
+        "question_key": "article_6_3_preparatory_task",
+        "type": "boolean",
+        "label": "Is it only a preparatory task for an assessment that a human completes?",
+        "help": (
+            "NEEDS SME REVIEW: Preparatory tasks may qualify for Article 6(3) treatment only in "
+            "limited circumstances. This answer requires legal review."
+        ),
+    },
+    {
+        "question_key": "article_6_3_profiling",
+        "type": "boolean",
+        "label": "Does the system perform profiling of natural persons?",
+        "help": (
+            "NEEDS SME REVIEW: Profiling overrides the Article 6(3) exception path in this rule "
+            "engine and keeps the Annex III high-risk classification route active."
+        ),
+    },
+]
+
 BRANCH_QUESTIONS: dict[str, list[dict[str, Any]]] = {
     "employment_recruitment": [
         {
@@ -144,6 +192,7 @@ BRANCH_QUESTIONS: dict[str, list[dict[str, Any]]] = {
             ],
             "allow_unknown": True,
         },
+        *ARTICLE_6_3_QUESTIONS,
     ],
     "credit_financial": [
         {
@@ -162,6 +211,7 @@ BRANCH_QUESTIONS: dict[str, list[dict[str, Any]]] = {
                 {"value": "insurance_pricing", "label": "Insurance premium or underwriting risk pricing"},
             ],
         },
+        *ARTICLE_6_3_QUESTIONS,
     ],
     "customer_support": [
         {

@@ -22,14 +22,17 @@ from app.documents.spec import RenderContext
 
 
 def build_pack_files(ctx: RenderContext, sku: str) -> dict[str, bytes]:
-    """Return ordered artifact bytes for starter_report or evidence_pack SKU."""
+    """Return ordered artifact bytes for the evidence_pack SKU."""
+    if sku != "evidence_pack":
+        raise ValueError(f"Unsupported document SKU: {sku}")
+
     builders: dict[str, Callable[[], bytes]] = {
         "01_risk_classification_memo.md": lambda: render_markdown(ctx),
         "02_ai_system_card.md": lambda: render_system_card(ctx),
         "03_obligation_matrix.csv": lambda: render_obligation_csv(ctx),
     }
 
-    if sku == "evidence_pack" and ctx.is_high_risk:
+    if ctx.is_high_risk:
         builders["04_annex_iv_technical_documentation_template.docx"] = (
             lambda: render_docx_annex_iv(ctx)
         )
@@ -47,10 +50,8 @@ def build_pack_files(ctx: RenderContext, sku: str) -> dict[str, bytes]:
             )
         builders["11_evidence_tracker.xlsx"] = lambda: render_evidence_xlsx(ctx)
         builders["12_customer_procurement_summary.pdf"] = lambda: render_procurement_pdf(ctx)
-    elif sku == "evidence_pack":
-        builders["04_customer_procurement_summary.pdf"] = lambda: render_procurement_pdf(ctx)
-        builders["05_evidence_tracker.xlsx"] = lambda: render_evidence_xlsx(ctx)
     else:
         builders["04_customer_procurement_summary.pdf"] = lambda: render_procurement_pdf(ctx)
+        builders["05_evidence_tracker.xlsx"] = lambda: render_evidence_xlsx(ctx)
 
     return {name: fn() for name, fn in builders.items()}

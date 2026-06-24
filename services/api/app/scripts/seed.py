@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -14,12 +17,77 @@ from app.models import (
     IndustryDomain,
     LegalReference,
     LegalSource,
-    Obligation,
     RiskRule,
     RiskTier,
     RuleSet,
     SEOPage,
 )
+from app.rules.conditions import ALLOWED_OPERATORS
+from app.rules.priorities import PHASE_ORDER
+
+def _repo_data_path() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "data" / "seeds" / "rules.json"
+        if candidate.exists():
+            return candidate
+    return Path("data/seeds/rules.json").resolve()
+
+
+RULES_JSON_PATH = _repo_data_path()
+
+
+def _validate_condition_shape(node: Any) -> None:
+    if not isinstance(node, dict):
+        raise ValueError("Rule condition node must be an object")
+
+    logical_keys = [key for key in ("all", "any", "none") if key in node]
+    if logical_keys:
+        if len(logical_keys) != 1 or len(node) != 1:
+            raise ValueError("Rule condition logical node must contain exactly one logical key")
+        children = node[logical_keys[0]]
+        if not isinstance(children, list) or not children:
+            raise ValueError("Rule condition logical node must contain a non-empty list")
+        for child in children:
+            _validate_condition_shape(child)
+        return
+
+    if set(node) - {"field", "operator", "value"}:
+        raise ValueError("Rule condition leaf contains unsupported keys")
+    if not isinstance(node.get("field"), str):
+        raise ValueError("Rule condition leaf requires a string field")
+    if node.get("operator") not in ALLOWED_OPERATORS:
+        raise ValueError(f"Unsupported condition operator: {node.get('operator')}")
+
+
+def _load_seed_rules() -> list[dict[str, Any]]:
+    payload = json.loads(RULES_JSON_PATH.read_text())
+    rules = payload.get("rules")
+    if not isinstance(rules, list) or not rules:
+        raise ValueError("rules.json must contain a non-empty rules array")
+
+    seen_codes: set[str] = set()
+    required = {
+        "rule_code",
+        "name",
+        "priority",
+        "phase",
+        "risk_tier_slug",
+        "legal_reference_key",
+        "condition_json",
+    }
+    for row in rules:
+        if not isinstance(row, dict):
+            raise ValueError("Each rule row must be an object")
+        missing = required - set(row)
+        if missing:
+            raise ValueError(f"Rule row missing keys: {sorted(missing)}")
+        if row["rule_code"] in seen_codes:
+            raise ValueError(f"Duplicate rule_code: {row['rule_code']}")
+        seen_codes.add(row["rule_code"])
+        if row["phase"] not in PHASE_ORDER:
+            raise ValueError(f"Unsupported rule phase: {row['phase']}")
+        _validate_condition_shape(row["condition_json"])
+    return rules
 
 
 def seed(session: Session) -> None:
@@ -52,7 +120,6 @@ def seed(session: Session) -> None:
     ]
     session.add_all(roles)
     session.flush()
-    provider = next(r for r in roles if r.slug == "provider")
 
     source = LegalSource(
         title="Regulation (EU) 2024/1689 (Artificial Intelligence Act)",
@@ -99,7 +166,6 @@ def seed(session: Session) -> None:
     ]
     session.add_all(doc_types)
     session.flush()
-    doc_by_slug = {d.slug: d for d in doc_types}
 
     hr = IndustryDomain(slug="hr-tech", name="HR Tech", description="Human resources technology")
     session.add(hr)
@@ -110,7 +176,7 @@ def seed(session: Session) -> None:
         status="active",
         legal_source_version=source.version_label,
         notes="Initial MVP ruleset",
-        published_at=datetime.now(timezone.utc),
+        published_at=datetime.now(UTC),
     )
     session.add(ruleset)
     session.flush()
@@ -118,75 +184,16 @@ def seed(session: Session) -> None:
     rules = [
         RiskRule(
             rule_set_id=ruleset.id,
-            rule_code="annex_iii_employment_recruitment_selection",
-            name="Annex III employment — recruitment/selection",
-            description="System is intended to analyse and filter job applications and evaluate candidates.",
-            priority=10,
-            phase="high_risk_annex_iii",
-            risk_tier_id=tier_by_slug["high_risk"].id,
-            legal_reference_id=refs["annex_iii_4a"].id,
-            condition_json={
-                "all": [
-                    {"field": "use_case_category", "operator": "equals", "value": "employment_recruitment"},
-                    {
-                        "field": "system_function",
-                        "operator": "contains_any",
-                        "value": ["filter_applications", "rank_candidates", "evaluate_candidates"],
-                    },
-                    {"field": "affects_natural_persons", "operator": "is_true"},
-                ]
-            },
-        ),
-        RiskRule(
-            rule_set_id=ruleset.id,
-            rule_code="annex_iii_credit_scoring",
-            name="Annex III — creditworthiness evaluation",
-            priority=20,
-            phase="high_risk_annex_iii",
-            risk_tier_id=tier_by_slug["high_risk"].id,
-            legal_reference_id=refs["annex_iii_5b"].id,
-            condition_json={
-                "all": [
-                    {"field": "use_case_category", "operator": "equals", "value": "credit_financial"},
-                    {
-                        "field": "system_function",
-                        "operator": "contains_any",
-                        "value": ["credit_scoring", "loan_eligibility", "insurance_pricing"],
-                    },
-                    {"field": "affects_natural_persons", "operator": "is_true"},
-                ]
-            },
-        ),
-        RiskRule(
-            rule_set_id=ruleset.id,
-            rule_code="limited_risk_chatbot_transparency",
-            name="Limited-risk — chatbot transparency",
-            priority=30,
-            phase="limited_risk",
-            risk_tier_id=tier_by_slug["limited_risk"].id,
-            legal_reference_id=refs["article_50"].id,
-            condition_json={
-                "all": [
-                    {"field": "use_case_category", "operator": "equals", "value": "customer_support"},
-                    {"field": "interacts_with_users", "operator": "is_true"},
-                ]
-            },
-        ),
-        RiskRule(
-            rule_set_id=ruleset.id,
-            rule_code="limited_risk_deepfake",
-            name="Limited-risk — synthetic media disclosure",
-            priority=40,
-            phase="limited_risk",
-            risk_tier_id=tier_by_slug["limited_risk"].id,
-            legal_reference_id=refs["article_50"].id,
-            condition_json={
-                "all": [
-                    {"field": "use_case_category", "operator": "equals", "value": "content_generation"},
-                    {"field": "generates_synthetic_media", "operator": "is_true"},
-                ]
-            },
-        ),
+            rule_code=row["rule_code"],
+            name=row["name"],
+            description=row.get("description"),
+            priority=row["priority"],
+            phase=row["phase"],
+            risk_tier_id=tier_by_slug[row["risk_tier_slug"]].id,
+            legal_reference_id=refs[row["legal_reference_key"]].id,
+            condition_json=row["condition_json"],
+        )
+        for row in _load_seed_rules()
     ]
     session.add_all(rules)
 
@@ -215,7 +222,7 @@ Resume screening and candidate ranking AI is **likely high-risk** under Annex II
 Run the free AI Act check to classify your specific system.
 """,
             canonical_url="http://localhost:3000/eu-ai-act/hr-tech/resume-screening",
-            last_reviewed_at=datetime.now(timezone.utc),
+            last_reviewed_at=datetime.now(UTC),
             rule_version=1,
             status="active",
         )
