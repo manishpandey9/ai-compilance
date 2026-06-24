@@ -1,6 +1,33 @@
 import { AppShell, MarketingHeader, PageContainer } from "@/components/layout/shell";
 import { SiteFooter } from "@/components/layout/footer";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ButtonLink } from "@/components/ui/button";
+import { EVIDENCE_PACK_PRICE_USD } from "@/lib/product";
+import { SITE } from "@/lib/site";
+
+const HOME_JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
+    email: SITE.contactEmail,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: SITE.url,
+    description: SITE.description,
+    offers: {
+      "@type": "Offer",
+      price: String(EVIDENCE_PACK_PRICE_USD),
+      priceCurrency: "USD",
+    },
+  },
+];
 
 export default function HomePage() {
   return (
@@ -9,6 +36,7 @@ export default function HomePage() {
       header={<MarketingHeader variant="light" />}
       footer={<SiteFooter variant="light" />}
     >
+      <JsonLd data={HOME_JSON_LD} />
       <main id="main-content" className="py-20 sm:py-28">
         <PageContainer>
           <div className="max-w-xl">

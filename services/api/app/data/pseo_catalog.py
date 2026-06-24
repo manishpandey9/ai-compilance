@@ -107,6 +107,19 @@ ACQUISITION_SLUGS = {
     "templates/human-oversight-plan",
 }
 
+APPROVED_INDEX_SLUGS = {
+    "hr-tech/resume-screening",
+    "hr-tech/candidate-ranking",
+    "fintech/credit-scoring",
+    "fintech/insurance-pricing",
+    "general/customer-support-chatbot",
+    "general/deepfake-disclosure",
+    "templates/annex-iv-technical-documentation",
+    "templates/fundamental-rights-impact-assessment",
+    "templates/human-oversight-plan",
+    "roles/provider-vs-deployer-hr",
+}
+
 LEGAL_REVIEW_PENDING = "pending_sme"
 LEGAL_REVIEW_APPROVED = "approved"
 
@@ -136,8 +149,8 @@ def coverage_supported_slugs() -> set[str]:
 
 def legal_review_status_for_slug(slug: str) -> str:
     """Return SME review status for index gating."""
-    if slug in coverage_supported_slugs():
-        return LEGAL_REVIEW_PENDING
+    if slug in APPROVED_INDEX_SLUGS and slug in coverage_supported_slugs():
+        return LEGAL_REVIEW_APPROVED
     return LEGAL_REVIEW_PENDING
 
 

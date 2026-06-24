@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models import LegalReference, SEOPage, SEOPageReference
+from app.models import SEOPage, SEOPageReference
 
 _RISK_COPY: dict[str, dict[str, str]] = {
     "high_risk": {
@@ -75,6 +75,170 @@ _RISK_COPY: dict[str, dict[str, str]] = {
 }
 
 
+_TEMPLATE_COPY: dict[str, dict[str, str]] = {
+    "annex-iv-technical-documentation": {
+        "hook": "Article 11 and Annex IV",
+        "answer": (
+            "Annex IV technical documentation is the core evidence file providers prepare for "
+            "high-risk AI systems before EU market placement. It should explain the system's "
+            "intended purpose, design, data, risk controls, validation, monitoring, and human "
+            "oversight in a way a reviewer can trace back to the regulation."
+        ),
+        "sections": (
+            "- Intended purpose, provider details, and system version\n"
+            "- Model, data, training, validation, and testing description\n"
+            "- Risk management and post-market monitoring links\n"
+            "- Human oversight, accuracy, robustness, cybersecurity, and logging controls\n"
+            "- Instructions for use and conformity assessment evidence"
+        ),
+    },
+    "fundamental-rights-impact-assessment": {
+        "hook": "Article 27",
+        "answer": (
+            "A fundamental rights impact assessment is a deployer-side document for covered "
+            "high-risk AI uses. It records the deployer's context, affected groups, foreseeable "
+            "rights impacts, mitigation steps, oversight, and monitoring before deployment."
+        ),
+        "sections": (
+            "- Deployer context and intended use\n"
+            "- Affected persons and groups\n"
+            "- Foreseeable impact on fundamental rights\n"
+            "- Human oversight and escalation measures\n"
+            "- Monitoring, complaint, and review process"
+        ),
+    },
+    "human-oversight-plan": {
+        "hook": "Article 14",
+        "answer": (
+            "A human oversight plan describes how people can understand, monitor, intervene in, "
+            "or stop a high-risk AI system. It should be practical enough for operators, not just "
+            "a policy statement."
+        ),
+        "sections": (
+            "- Human reviewer role and authority\n"
+            "- Alerts, thresholds, and escalation paths\n"
+            "- Override, stop, or fallback procedure\n"
+            "- Training and competency requirements\n"
+            "- Monitoring records and periodic review"
+        ),
+    },
+}
+
+
+_ROLE_COPY: dict[str, dict[str, str]] = {
+    "provider-vs-deployer-hr": {
+        "hook": "Article 16 / Article 26",
+        "answer": (
+            "For HR AI, the vendor building or placing the system on the EU market is usually the "
+            "provider, while the employer using it in recruitment or workforce decisions is usually "
+            "the deployer. Both sides need evidence, but the provider and deployer obligations are "
+            "not the same."
+        ),
+        "provider": (
+            "- Maintain technical documentation and conformity evidence\n"
+            "- Run risk management, testing, logging, and post-market monitoring\n"
+            "- Provide instructions for use to deployers\n"
+            "- Register where required before EU market placement"
+        ),
+        "deployer": (
+            "- Use the system according to instructions\n"
+            "- Assign trained human oversight\n"
+            "- Monitor operation and keep logs where under their control\n"
+            "- Complete FRIA duties when Article 27 applies"
+        ),
+    }
+}
+
+
+def _compose_template_page(*, use_case: str, use_case_name: str, citation: str) -> str | None:
+    template = _TEMPLATE_COPY.get(use_case)
+    if not template:
+        return None
+    return f"""## Quick answer
+
+**{use_case_name}** helps teams prepare source-cited evidence for high-risk AI systems under the EU AI Act. It is not a final legal opinion or notified-body approval.
+
+Primary legal hook for this page: **{citation}** ({template["hook"]}).
+
+## What this template is for
+
+{template["answer"]}
+
+## Sections to prepare
+
+{template["sections"]}
+
+## What to collect before drafting
+
+- System name, version, intended purpose, and EU market role
+- Risk classification result and triggered legal references
+- Data categories, affected persons, and user/deployer context
+- Existing product documentation, logs, monitoring, and incident process
+
+## Common gaps
+
+- Treating a template as proof of compliance without product-specific evidence
+- Missing the Article or Annex citation for each obligation
+- Not separating provider duties from deployer duties
+- Leaving human oversight or monitoring owners unnamed
+
+## Run the questionnaire
+
+Start with the rule-based classification. The document pack uses that result to prepare editable drafts with citations.
+
+## FAQ
+
+**Can a template make a system compliant by itself?**
+No. It is a structured starting point. You still need product-specific evidence, review, and where applicable conformity assessment.
+
+**Does every AI system need this template?**
+No. These documents are mainly relevant when a system is high-risk or when a buyer, auditor, or counsel asks for evidence.
+"""
+
+
+def _compose_role_page(*, use_case: str, use_case_name: str, citation: str) -> str | None:
+    role = _ROLE_COPY.get(use_case)
+    if not role:
+        return None
+    return f"""## Quick answer
+
+**{use_case_name}** matters because EU AI Act evidence is split by role. A provider and deployer may look at the same HR AI system but have different duties.
+
+Primary legal hook for this page: **{citation}** ({role["hook"]}).
+
+## Provider vs deployer
+
+{role["answer"]}
+
+## Provider evidence to prepare
+
+{role["provider"]}
+
+## Deployer evidence to prepare
+
+{role["deployer"]}
+
+## Common contract questions
+
+- Which party controls model updates and instructions for use?
+- Who monitors post-market performance and incidents?
+- Who keeps logs and can access them?
+- Who completes a FRIA if the deployment context triggers Article 27?
+
+## Run the questionnaire
+
+Use the questionnaire to classify the use case, identify the likely primary role, and generate source-cited evidence-prep drafts.
+
+## FAQ
+
+**Can a company be both provider and deployer?**
+Yes. A company can carry both sets of obligations when it develops or substantially modifies a system and also uses it.
+
+**Does using a third-party HR AI tool remove deployer duties?**
+No. Deployer duties can still apply, especially around use according to instructions, human oversight, monitoring, and FRIA where required.
+"""
+
+
 def compose_page_content(
     *,
     industry: str,
@@ -84,6 +248,22 @@ def compose_page_content(
     risk_hint: str,
     citation: str,
 ) -> str:
+    template_page = _compose_template_page(
+        use_case=use_case,
+        use_case_name=use_case_name,
+        citation=citation,
+    )
+    if template_page:
+        return template_page
+
+    role_page = _compose_role_page(
+        use_case=use_case,
+        use_case_name=use_case_name,
+        citation=citation,
+    )
+    if role_page:
+        return role_page
+
     meta = _RISK_COPY.get(risk_hint, _RISK_COPY["minimal_risk"])
     tier = meta["tier_label"]
 
@@ -163,6 +343,23 @@ def build_structured_data(title: str, slug: str, use_case_name: str, risk_hint: 
                 {"@type": "ListItem", "position": 2, "name": title, "item": url},
             ],
         },
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "AI Act Navigator",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "url": settings.web_base_url,
+            "description": (
+                "Rule-based EU AI Act risk classification and evidence-prep drafts with legal "
+                "article references."
+            ),
+            "offers": {
+                "@type": "Offer",
+                "price": "20",
+                "priceCurrency": "USD",
+            },
+        },
     ]
 
 
@@ -176,6 +373,7 @@ async def upsert_seo_page(
     content_md: str,
     rule_version: int,
     legal_reference_id: int | None = None,
+    legal_reference_ids: list[int] | None = None,
     use_case_name: str = "",
     risk_hint: str = "minimal_risk",
 ) -> SEOPage:
@@ -183,7 +381,7 @@ async def upsert_seo_page(
     structured = build_structured_data(title, slug, use_case_name or title, risk_hint)
     existing = await session.execute(select(SEOPage).where(SEOPage.slug == slug))
     page = existing.scalar_one_or_none()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if page:
         page.title = title
@@ -209,17 +407,27 @@ async def upsert_seo_page(
         session.add(page)
         await session.flush()
 
+    reference_ids = set(legal_reference_ids or [])
     if legal_reference_id:
+        reference_ids.add(legal_reference_id)
+
+    if reference_ids:
+        await session.execute(
+            delete(SEOPageReference).where(
+                SEOPageReference.seo_page_id == page.id,
+                SEOPageReference.legal_reference_id.not_in(reference_ids),
+            )
+        )
+
+    for ref_id in reference_ids:
         ref_exists = await session.execute(
             select(SEOPageReference).where(
                 SEOPageReference.seo_page_id == page.id,
-                SEOPageReference.legal_reference_id == legal_reference_id,
+                SEOPageReference.legal_reference_id == ref_id,
             )
         )
         if not ref_exists.scalar_one_or_none():
-            session.add(
-                SEOPageReference(seo_page_id=page.id, legal_reference_id=legal_reference_id)
-            )
+            session.add(SEOPageReference(seo_page_id=page.id, legal_reference_id=ref_id))
 
     return page
 
