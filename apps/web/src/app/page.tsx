@@ -54,31 +54,28 @@ export default function HomePage() {
               </ButtonLink>
               <ButtonLink
                 href="/eu-ai-act/hr-tech/resume-screening"
-                variant="text"
+                variant="secondary"
                 surface="light"
               >
-                Example: resume screening
+                View HR screening example
               </ButtonLink>
             </div>
           </div>
 
           <div className="mt-20 max-w-xl space-y-4 border-t border-zinc-200 pt-10 text-[0.9375rem] leading-relaxed text-zinc-600">
             <p>
-              The questionnaire takes about five minutes. Classification runs on a published rule
-              set. Each conclusion links to the article or annex that triggered it.
+              Get a defensible EU AI Act starting point before a buyer, counsel, or auditor asks
+              for one. The check takes a few minutes and turns your product details into a clear
+              risk result with the legal references behind it.
             </p>
             <p>
-              Current rule-backed coverage focuses on HR recruitment, creditworthiness and insurance
-              pricing, chatbot transparency, and synthetic-media disclosure. Other use cases are
-              routed to review territory instead of pretending certainty.
+              Leave with a plain-English risk result, the role your team is likely playing, and a
+              prioritized checklist for what to prepare next.
             </p>
             <p>
-              Paid tiers add editable first drafts: classification memo, obligation checklist, Annex
-              IV outline, human oversight plan, FRIA template where it applies, and evidence tracker.
-            </p>
-            <p className="text-zinc-500">
-              Not legal advice. When inputs are incomplete, unsupported, or conflicting, we flag the
-              gap instead of guessing.
+              Download the first documents a customer or counsel will ask for: a classification
+              memo, obligation checklist, Annex IV outline, human oversight plan, FRIA starter where
+              relevant, and evidence tracker.
             </p>
           </div>
         </PageContainer>

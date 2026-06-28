@@ -21,7 +21,8 @@ export function SiteFooter({ variant = "dark" }: SiteFooterProps) {
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-start sm:justify-between">
         <p className="max-w-xs leading-relaxed">
-          Not legal advice. Classification uses a versioned rule engine, not an LLM.
+          Information only, not legal advice. Use the results as a preparation aid for expert
+          review.
         </p>
         <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
           <Link href="/eu-ai-act/compliance-checker" className={cn("hover:underline", ring)}>
